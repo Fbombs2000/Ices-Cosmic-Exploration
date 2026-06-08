@@ -314,5 +314,16 @@ namespace ICE.Utilities
             else
                 return CosmicHelper.Status.None;
         }
+        internal static unsafe uint GetScore()
+        {
+            var manager = WKSManager.Instance();
+            if (manager == null) return 0;
+
+            var missionManager = manager->MissionModule;
+            if (missionManager == null) return 0;
+
+            var mission = manager->State.CurrentMission;
+            return mission.Score;
+        }
     }
 }

@@ -437,6 +437,7 @@ namespace ICE.Scheduler.Tasks
             }
             else
             {
+                Task_NavmeshMove.ResetGatherMove();
                 var rank = Task_CheckScore.CurrentRank();
 
 

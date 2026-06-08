@@ -1,5 +1,6 @@
 ﻿using ICE.ConfigFiles;
 using ICE.Ui;
+using ICE.Ui.DebugWindowTabs;
 using ICE.Ui.MainUi.Settings;
 using ICE.Utilities.Cosmic_Helper;
 using ICE.Utilities.GatheringHelper;
@@ -929,11 +930,30 @@ public sealed partial class ICE
             var id = mission.Key;
             if (CosmicHelper.SheetMissionDict.TryGetValue(id, out var missionInfo))
             {
+                if (!missionInfo.Jobs.Contains(18))
+                    continue;
+
                 if (missionInfo.Fish_Presets.Count > 0)
                 {
                     // we have a fishing preset here. Time to check to see if we need to enable it (if it doesn't have a custom profile)
+                    if (!mission.Value.Use_BuildinPreset)
+                    {
+                        if (mission.Value.AutoHookPresetName == string.Empty)
+                        {
+                            mission.Value.Use_BuildinPreset = true;
+                            C.SaveDebounced();
+                        }
+                        else
+                        {
+                            IceLogging.Verbose($"[{id}] has a preset. Name: {mission.Value.AutoHookPresetName}", "I.C.E. Dictionary Creation");
+                        }
+                    }
                     if (!mission.Value.Use_BuildinPreset && mission.Value.AutoHookPresetName == string.Empty)
                         mission.Value.Use_BuildinPreset = true;
+                }
+                else
+                {
+                    IceLogging.Verbose($"[{id}] has no presets", "I.C.E. Dictionary Creation");
                 }
             }
         }
