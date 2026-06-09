@@ -5,6 +5,7 @@ using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using ICE.Scheduler.Handlers.PictoStuff;
 using ICE.Utilities.Cosmic_Helper;
+using ICE.Utilities.GatheringHelper;
 using ICE.Utilities.GatheringHelper.RouteLoader;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -787,6 +788,8 @@ namespace ICE.Scheduler.Tasks
             string tag = "Navmesh: Position -> Red Alert";
             var territoryId = Player.Territory.RowId;
 
+            var criticalKey = CosmicHelper.SheetMissionDict[missionId].Critical_MapKey;
+
             if (!C.UseRedAlertNpc)
             {
                 IceLogging.Info("We were told not to use the red alert NPC travel method, so we're going to just nope out of here", tag);
@@ -796,9 +799,9 @@ namespace ICE.Scheduler.Tasks
             {
                 if (planetInfo.TryGetValue(NpcData.NpcType.RedAlert, out var npcInfo))
                 {
-                    if (!CosmicHelper.CriticalLocations.TryGetValue(missionId, out var approxStart))
+                    if (!GatheringUtil.CriticalSpots.TryGetValue(criticalKey, out var approxStart))
                     {
-                        IceLogging.Warning($"No red-alert turn-in coords for mission {missionId} on {CosmicMoonRegistry.GetDisplayName(territoryId)} — add to RedAlert_Selection", tag);
+                        IceLogging.Warning($"No red-alert turn-in coords for critical route: {criticalKey} on {CosmicMoonRegistry.GetDisplayName(territoryId)} — add to RedAlert_Selection", tag);
                         return true;
                     }
 
@@ -811,7 +814,7 @@ namespace ICE.Scheduler.Tasks
                         _PathCalculations = Task.Run(async () =>
                         {
                             method.pathTo = await FindPath(start, npcInfo.Location_Circle);
-                            method.pathFrom = await FindPath(approxStart.RawLocation, destination);
+                            method.pathFrom = await FindPath(approxStart.WorldCords, destination);
                         });
                         if (EzThrottler.Throttle("Started task: Direct"))
                             IceLogging.Verbose("Started to calculate path", tag);
@@ -1070,6 +1073,8 @@ namespace ICE.Scheduler.Tasks
             var territoryId = Player.Territory.RowId;
             var method = TravelMethods[TravelTypes.Hub_RedAlert];
 
+            var criticalKey = CosmicHelper.SheetMissionDict[missionId].Critical_MapKey;
+
             if (!C.UseHubReturn)
                 return true;
 
@@ -1079,7 +1084,7 @@ namespace ICE.Scheduler.Tasks
             if (!CosmicHelper.SheetMissionDict[missionId].IsCritical)
                 return true;
 
-            if (!CosmicHelper.CriticalLocations.TryGetValue(missionId, out var approxStart))
+            if (!GatheringUtil.CriticalSpots.TryGetValue(criticalKey, out var criticalInfo))
             {
                 IceLogging.Warning($"No red-alert turn-in coords for mission {missionId} — hub return via NPC skipped");
                 return true;
@@ -1103,7 +1108,7 @@ namespace ICE.Scheduler.Tasks
                                 _PathCalculations = Task.Run(async () =>
                                 {
                                     method.pathTo = await FindPath(HubCenter, npcInfo.Location_Circle);
-                                    method.pathFrom = await FindPath(approxStart.RawLocation, destination);
+                                    method.pathFrom = await FindPath(criticalInfo.WorldCords, destination);
                                 });
                                 if (EzThrottler.Throttle("Started task: Direct"))
                                     IceLogging.Verbose("Started to calculate path", tag);
@@ -1342,8 +1347,9 @@ namespace ICE.Scheduler.Tasks
             string tag = "Travel: Via RedAlert NPC";
 
             IceLogging.Verbose("Travel via Npc commenced", tag);
+            var criticalKey = CosmicHelper.SheetMissionDict[missionId].Critical_MapKey;
 
-            if (CosmicHelper.CriticalLocations.TryGetValue(missionId, out var redAlert))
+            if (GatheringUtil.CriticalSpots.TryGetValue(criticalKey, out var criticalInfo))
             {
                 if (Player.DistanceTo(redAlertNpc.Location_Circle) < 5)
                 {
@@ -1371,8 +1377,8 @@ namespace ICE.Scheduler.Tasks
                     {
                         if (EzThrottler.Throttle("Selecting teleport option"))
                         {
-                            IceLogging.Verbose($"Selecting Option: {redAlert.NpcSelection} for mission: {missionId}", tag);
-                            selectString.Entries[redAlert.NpcSelection].Select();
+                            IceLogging.Verbose($"Selecting Option: {criticalInfo.NpcSelector} for mission: {missionId}", tag);
+                            selectString.Entries[criticalInfo.NpcSelector].Select();
                         }
                     }
                     else if (GenericHelpers.TryGetAddonMaster<SelectYesno>(out var yesNo) && yesNo.IsAddonReady)
@@ -1411,7 +1417,7 @@ namespace ICE.Scheduler.Tasks
                         }
                     }
                 }
-                else if (Player.DistanceTo(redAlert.RawLocation) < 75)
+                else if (Player.DistanceTo(criticalInfo.WorldCords) < 75)
                 {
                     if (!PlayerHelper.IsScreenReady())
                         return false;

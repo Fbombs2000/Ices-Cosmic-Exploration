@@ -122,13 +122,13 @@ public sealed partial class ICE
             uint marker_Critical = 0;
 
             List<uint> gatherJobs = new() { 16, 17, 18 }; 
-            if (entry.MissionToDo[0].RowId != 0 && jobs.ContainsAny(gatherJobs))
+            if (entry.MissionToDo[0].RowId != 0)
             {
                 marker_Gather = entry.MissionToDo[0].Value.MapMarker.RowId;
             }
             if (entry.MissionToDo[1].RowId != 0)
             {
-                marker_Critical = entry.MissionToDo[0].Value.MapMarker.RowId;
+                marker_Critical = entry.MissionToDo[1].Value.MapMarker.RowId;
             }
 
             // Stacked map markers — nudge slightly so route editor keys stay unique per mission row.
@@ -177,8 +177,7 @@ public sealed partial class ICE
                     116 => MissionAttributes.Fish | MissionAttributes.Limited | MissionAttributes.Score_Variety,
                     117 => MissionAttributes.Fish | MissionAttributes.Limited | MissionAttributes.Score_LargestSize,
                     118 => MissionAttributes.Fish | MissionAttributes.Limited | MissionAttributes.Collectables,
-                    119 or 121
-                         => MissionAttributes.Fish,
+                    119 or 121 => MissionAttributes.Fish,
                     120 => MissionAttributes.Fish | MissionAttributes.Score_LargestSize,
                     122 => MissionAttributes.Fish | MissionAttributes.Collectables,
                     139 => gatherOrFish,            // Critical — job-dependent
@@ -186,7 +185,7 @@ public sealed partial class ICE
                     // Auxesia Tool Mastery gather missions (Geological/Botanical).
                     // GreaterReach block below converts Chain+Boon into GreaterReach_Boon_Chain.
                     312 or 313 => MissionAttributes.Gather | MissionAttributes.Score_Chain | MissionAttributes.Score_Boon,
-
+                    314 => MissionAttributes.Gather | MissionAttributes.Collectables,
                     _ => gatherOrFish
                 };
             }
@@ -881,6 +880,7 @@ public sealed partial class ICE
 
         EnsureAllMission();
         GatheringUtil.RegisterPresets();
+        UpdateCriticalWeather();
         CosmicMoonContent.LogContentSummary();
 
         #region Config Stuff
@@ -976,6 +976,8 @@ public sealed partial class ICE
 
             GatherSettings.SetupAllProfiles();
         }
+        if (!C.MissionTypePrio.Contains(MissionTypes.ToolMastery))
+            C.MissionTypePrio.Add(MissionTypes.ToolMastery);
 
         C.Save();
 

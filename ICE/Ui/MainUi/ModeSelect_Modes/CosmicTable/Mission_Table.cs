@@ -221,6 +221,14 @@ namespace ICE.Ui.MainUi.ModeSelect_Modes.CosmicTable
             {
                 ImGui.PushID(item.Id);
 
+                var mission = CosmicHelper.CurrentLunarMission;
+                }
+                else if (CosmicHandler.All_AvailableMissions().Contains(item.Id))
+                {
+                    ImGui.TableSetBgColor(ImGuiTableBgTarget.RowBg1, ImGui.GetColorU32(new Vector4(0.0f, 1.0f, 0.2f, 0.25f)));
+                }
+
+
                 bool disabled = C.SelectedMode == ModeSelect.MissionGoldMode
                              || C.SelectedMode == ModeSelect.LevelMode
                              || (C.SelectedMode == ModeSelect.RelicMode && !C.XPRelicOnlyEnabled);
@@ -261,21 +269,6 @@ namespace ICE.Ui.MainUi.ModeSelect_Modes.CosmicTable
             public override string ToName(MissionInfo mission) => mission.SheetInfo.Name;
             public override void DrawColumn(MissionInfo mission, int _)
             {
-                if (UnsupportedMissions.Ids.Contains(mission.Id))
-                {
-                    ImGuiEx.IconWithTooltip(FontAwesomeIcon.ExclamationTriangle, "This mission is not currently supported\n" +
-                        "Had to rework the gathering dictionary and I'm tired of people not reading, so I had to push the update\n" +
-                        "Sooner rather than later. I should have it done Sunday though if not tonight\n" +
-                        "Sorry for the conconvience");
-                }
-                if (mission.SheetInfo.TerritoryId == CosmicMoonRegistry.Auxesia.TerritoryId && mission.SheetInfo.Jobs.Contains(18))
-                {
-                    ImGuiEx.IconWithTooltip(FontAwesomeIcon.ExclamationTriangle,
-                        "Fishing isn't *-directly-* supportet yet. But all the fishing holes have locations now\n" +
-                        "So you should be able to import from the autohook wiki -> Set the first preset's name under \"Fishing Settings\"\n" +
-                        "And be able to farm to your hearts content. About as close as I can do rn till I finish up the rest of btn/min");
-                }
-
                 if (ImGui.Button(mission.SheetInfo.Name))
                 {
                     IceLogging.Verbose("Testing... if this fires off multiple times", "DEBUG TEST");
@@ -298,13 +291,25 @@ namespace ICE.Ui.MainUi.ModeSelect_Modes.CosmicTable
                         ImGui.EndTooltip();
                     }
                 }
-                if (CosmicHelper.CriticalLocations.TryGetValue(mission.Id, out var criticalLoc))
+                if (GatheringUtil.CriticalSpots.TryGetValue(mission.SheetInfo.Critical_MapKey, out var criticalInfo))
                 {
                     ImGui.SameLine();
                     if (ImGuiEx.IconButton(FontAwesomeIcon.FlagCheckered, $"CriticalFlag_{mission.Id}"))
                     {
-                        Utils.SetFlagForNPC(mission.SheetInfo.TerritoryId, criticalLoc.MapInfo.X, criticalLoc.MapInfo.Y);
+                        Utils.SetGatheringRing(mission.SheetInfo.TerritoryId, criticalInfo.X, criticalInfo.Y, criticalInfo.Radius, $"Red Alert: {mission.SheetInfo.Name}", criticalInfo.IconId);
                     }
+#if DEBUG
+                    if (ImGui.IsItemHovered())
+                    {
+                        ImGui.BeginTooltip();
+                        ImGui.Text($"Critical Route: {mission.SheetInfo.Critical_MapKey}");
+                        ImGui.Separator();
+                        ImGui.Text($"Map Cordinates: {criticalInfo.X} | {criticalInfo.Y}");
+                        ImGui.Separator();
+                        ImGui.Text($"World Position: {criticalInfo.WorldCords.X:N2} | {criticalInfo.WorldCords.Y:N2} | {criticalInfo.WorldCords.Z:N2}");
+                        ImGui.EndTooltip();
+                    }
+#endif
                 }
             }
         }
@@ -323,17 +328,6 @@ namespace ICE.Ui.MainUi.ModeSelect_Modes.CosmicTable
 
             public override void DrawColumn(MissionInfo item, int _)
             {
-                var mission = CosmicHelper.CurrentLunarMission;
-
-                if (mission != 0 && mission == item.Id)
-                {
-                    ImGui.TableSetBgColor(ImGuiTableBgTarget.RowBg1, ImGui.GetColorU32(new Vector4(0.0f, 1.0f, 0.2f, 0.25f)));
-                }
-                else if (CosmicHandler.All_AvailableMissions().Contains(item.Id))
-                {
-                    ImGui.TableSetBgColor(ImGuiTableBgTarget.RowBg1, ImGui.GetColorU32(new Vector4(0.0f, 1.0f, 0.2f, 0.25f)));
-                }
-
                 ImGuiUtil.Center($"{item.Id}");
             }
         }
@@ -1050,6 +1044,7 @@ namespace ICE.Ui.MainUi.ModeSelect_Modes.CosmicTable
                 bool gatherProfile = sheetInfo.Attributes.HasFlag(MissionAttributes.Gather) || sheetInfo.IsGreaterReach;
                 bool collectable = sheetInfo.Attributes.HasFlag(MissionAttributes.Collectables) || sheetInfo.Attributes.HasFlag(MissionAttributes.ReducedItems);
                 bool fishProfile = sheetInfo.Attributes.HasFlag(MissionAttributes.Fish);
+                bool master = sheetInfo.IsMaster;
 
                 ImGui.PushID($"Mission: {item.Id}");
 
@@ -1080,7 +1075,7 @@ namespace ICE.Ui.MainUi.ModeSelect_Modes.CosmicTable
 
                 if (gatherProfile)
                 {
-                    if (!collectable)
+                    if (!collectable || master)
                     {
                         string profileName = "???";
                         if (C.MissionConfig.TryGetValue(item.Id, out var config))
