@@ -273,6 +273,20 @@ namespace ICE.Ui.MainUi.ModeSelect_Modes.CosmicTable
             public override string ToName(MissionInfo mission) => mission.SheetInfo.Name;
             public override void DrawColumn(MissionInfo mission, int _)
             {
+                if (UnsupportedMissions.Ids.Contains(mission.Id))
+                {
+                    using (var warningPush = ImRaii.PushColor(ImGuiCol.Text, EColor.Red))
+                    {
+                        ImGuiEx.Icon(FontAwesomeIcon.ExclamationTriangle);
+                    }
+                    if (ImGui.IsItemHovered())
+                    {
+                        ImGui.BeginTooltip();
+                        ImGui.Text("This mission is currently missing stuff to allow it to work. It might be planet locked, or could be just needs mapped out\n" +
+                            "I'll get to it when my world gets to it o/");
+                        ImGui.EndTooltip();
+                    }
+                }
                 if (ImGui.Button(mission.SheetInfo.Name))
                 {
                     IceLogging.Verbose("Testing... if this fires off multiple times", "DEBUG TEST");
@@ -1045,7 +1059,7 @@ namespace ICE.Ui.MainUi.ModeSelect_Modes.CosmicTable
             {
                 var sheetInfo = item.SheetInfo;
                 bool craftProfile = sheetInfo.Attributes.HasFlag(MissionAttributes.Craft);
-                bool gatherProfile = sheetInfo.Attributes.HasFlag(MissionAttributes.Gather) || sheetInfo.IsGreaterReach;
+                bool gatherProfile = sheetInfo.Attributes.HasFlag(MissionAttributes.Gather);
                 bool collectable = sheetInfo.Attributes.HasFlag(MissionAttributes.Collectables) || sheetInfo.Attributes.HasFlag(MissionAttributes.ReducedItems);
                 bool fishProfile = sheetInfo.Attributes.HasFlag(MissionAttributes.Fish);
                 bool master = sheetInfo.IsMaster;
@@ -1125,7 +1139,7 @@ namespace ICE.Ui.MainUi.ModeSelect_Modes.CosmicTable
                         ImGuiUtil.Center("Auto");
                     }
                 }
-                else if (sheetInfo.Attributes.HasFlag(MissionAttributes.Fish))
+                else if (fishProfile)
                 {
                     if (C.MissionConfig.TryGetValue(item.Id, out var config))
                     {
@@ -1152,7 +1166,16 @@ namespace ICE.Ui.MainUi.ModeSelect_Modes.CosmicTable
                                 if (ImGui.InputText("Preset Name", ref presetName))
                                 {
                                     config.AutoHookPresetName = presetName;
-                                    C.Save();
+                                    C.SaveDebounced();
+                                }
+                                if (ImGui.Button("Try and apply above profile"))
+                                {
+                                    P.AutoHook.SetPreset(presetName);
+                                }
+                                if (ImGui.IsItemHovered())
+                                {
+                                    ImGui.SetTooltip("Allows testing to make sure that you have the preset name\n" +
+                                        "typed in correctly. This is *case* specific so");
                                 }
                             }
 
