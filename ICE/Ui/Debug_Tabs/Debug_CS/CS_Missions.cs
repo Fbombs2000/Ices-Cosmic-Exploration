@@ -7,7 +7,7 @@ using System.Text;
 using static ECommons.UIHelpers.AddonMasterImplementations.AddonMaster;
 using static FFXIVClientStructs.FFXIV.Client.UI.Agent.AgentWKSMission;
 
-namespace ICE.Ui.DebugWindowTabs
+namespace ICE.Ui.Debug_Tabs.Debug_CS
 {
     internal class CS_Missions
     {

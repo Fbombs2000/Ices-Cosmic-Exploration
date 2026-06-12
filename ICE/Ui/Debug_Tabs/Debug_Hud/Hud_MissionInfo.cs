@@ -2,7 +2,7 @@
 using ICE.Utilities.Cosmic_Helper;
 using static ECommons.UIHelpers.AddonMasterImplementations.AddonMaster;
 
-namespace ICE.Ui.DebugWindowTabs
+namespace ICE.Ui.Debug_Tabs.Debug_Hud
 {
     internal class Hud_MissionInfo
     {
@@ -39,7 +39,7 @@ namespace ICE.Ui.DebugWindowTabs
                     ImGui.TableNextColumn();
                     ImGui.Text($"{missionId}");
 
-                    if (CosmicHelper.SheetMissionDict.TryGetValue(missionId, out var mission) && !mission.Attributes.HasFlag(MissionAttributes.Critical))
+                    if (CosmicHelper.SheetMissionDict.TryGetValue(missionId, out var mission))
                     {
                         ImGui.TableNextColumn();
                         ImGui.TableSetColumnIndex(0);

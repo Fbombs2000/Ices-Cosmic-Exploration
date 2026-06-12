@@ -4,7 +4,7 @@ using ICE.Utilities.GatheringHelper;
 using Lumina.Excel.Sheets;
 using static Dalamud.Interface.Utility.Raii.ImRaii;
 
-namespace ICE.Ui.DebugWindowTabs
+namespace ICE.Ui.Debug_Tabs.Debug_Tables
 {
     internal class Table_GatheringInfo
     {

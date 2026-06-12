@@ -219,6 +219,10 @@ namespace ICE.Ui.DebugWindowTabs
                 });
                 Svc.Toasts.ShowNormal($"{message}");
             }
+            if (ImGui.Button("Test Glamour"))
+            {
+                P.GlamourIpc.SetClownNose();
+            }
         }
 
         private static void SwapBait(uint baitId)

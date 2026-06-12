@@ -1,6 +1,6 @@
 ﻿using Lumina.Excel.Sheets;
 
-namespace ICE.Ui.DebugWindowTabs
+namespace ICE.Ui.Debug_Tabs.Debug_Tables
 {
     internal class Table_TimeWeather
     {

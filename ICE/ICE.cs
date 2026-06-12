@@ -48,6 +48,7 @@ public sealed partial class ICE : IDalamudPlugin
     internal VislandIPC Visland;
     internal AutoHookIPC AutoHook;
     internal IceCosmicExplorationIPC IceIpc;
+    internal GlamourerIPC GlamourIpc;
 
     public ICE(IDalamudPluginInterface pi)
     {
@@ -69,6 +70,7 @@ public sealed partial class ICE : IDalamudPlugin
         Visland = new();
         AutoHook = new();
         IceIpc = new();
+        GlamourIpc = new();
 
         // all the windows
         windowSystem = new();

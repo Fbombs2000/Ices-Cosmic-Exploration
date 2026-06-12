@@ -3,7 +3,7 @@ using ICE.Utilities.Cosmic_Helper;
 using ICE.Utilities.GatheringHelper;
 using static ECommons.UIHelpers.AddonMasterImplementations.AddonMaster;
 
-namespace ICE.Ui.DebugWindowTabs
+namespace ICE.Ui.Debug_Tabs.Debug_Hud
 {
     internal class Hud_CollectableGathering
     {

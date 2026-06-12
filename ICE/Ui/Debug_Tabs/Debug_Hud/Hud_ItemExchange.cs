@@ -2,7 +2,7 @@
 using System.Text;
 using static ECommons.UIHelpers.AddonMasterImplementations.AddonMaster;
 
-namespace ICE.Ui.DebugWindowTabs
+namespace ICE.Ui.Debug_Tabs.Debug_Hud
 {
     internal class Hud_ItemExchange
     {

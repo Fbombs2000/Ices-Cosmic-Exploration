@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Text;
 using static ICE.Utilities.Cosmic_Helper.CosmicHelper;
 
-namespace ICE.Ui.DebugWindowTabs;
+namespace ICE.Ui.Debug_Tabs.Debug_Tables;
 
 internal class Table_MissionsV3
 {

@@ -1,7 +1,7 @@
 ﻿using Lumina.Excel.Sheets;
 using System.Collections.Generic;
 
-namespace ICE.Ui.DebugWindowTabs
+namespace ICE.Ui.Debug_Tabs.Debug_Tables
 {
     internal class Table_MissionText
     {
