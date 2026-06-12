@@ -185,7 +185,7 @@ public sealed partial class ICE
                     // Auxesia Tool Mastery gather missions (Geological/Botanical).
                     // GreaterReach block below converts Chain+Boon into GreaterReach_Boon_Chain.
                     312 or 313 => MissionAttributes.Gather | MissionAttributes.Score_Chain | MissionAttributes.Score_Boon,
-                    314 => MissionAttributes.Gather,
+                    314 => MissionAttributes.Gather | MissionAttributes.Collectables,
                     _ => gatherOrFish
                 };
             }
