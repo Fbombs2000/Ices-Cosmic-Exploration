@@ -149,7 +149,8 @@ namespace ICE.Scheduler.Tasks
 
                     if (EzThrottler.Throttle("Started Fishing Throttle", 500))
                     {
-                        IceLogging.Verbose($"+1 to waiting for fishing to actually start... {StartedFishing}", handle);
+                        IceLogging.Verbose($"+1 to waiting for fishing to actually start [Might be waiting on gp/buffs]... {StartedFishing}", handle);
+                        Svc.Commands.ProcessCommand("/ahstart");
                     }
                 }
                 else
