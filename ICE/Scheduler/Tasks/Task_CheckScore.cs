@@ -267,9 +267,22 @@ namespace ICE.Scheduler.Tasks
 
                             if (sheetInfo.IsMaster)
                             {
+
+
                                 shouldTurnin = (config.TurninGoal is TurninState.Gold && rank >= MissionRank.Gold)
                                     || (config.TurninGoal is TurninState.Master_Score && rank >= MissionRank.Gold && currentScore >= config.Master_Score)
                                     || (config.TurninGoal is TurninState.TimeExpired && rank >= MissionRank.Gold && CosmicHandler.IsMissionTimedOut());
+
+                                if (sheetInfo.Jobs.ContainsAny(CosmicHelper.CrafterJobList) && config.TurninGoal is TurninState.Master_Items)
+                                {
+                                    var craftItem = sheetInfo.Crafts_Main.FirstOrDefault();
+                                    var itemId = craftItem.Value.ItemId;
+                                    shouldTurnin = PlayerHelper.GetItemCount(itemId, out var count) && count >= config.Master_Items && rank >= MissionRank.Gold;
+                                    if (EzThrottler.Throttle("Item Count Message"))
+                                    {
+                                        IceLogging.Verbose($"Turnin was set to Item Count in master. Current Count: {count} | goal: {config.Master_Items}");
+                                    }
+                                }
                             }
                             else
                             {

@@ -848,11 +848,16 @@ namespace ICE.Ui.MainUi.ModeSelect_Modes.CosmicTable
                         .Push(ImGuiCol.ButtonActive, pillColor)
                         .Push(ImGuiCol.Text, textColor))
                     {
-                        ImGui.SmallButton(scoreText);
+                        if (ImGui.SmallButton($"{scoreText}##SPM_{item.Id}_{item.SheetInfo.Name}"))
+                        {
+                            P.externalDetails.OpenToStatsTab(item.Id);
+                        }
                     }
                     if (ImGui.IsItemHovered())
                     {
                         ImGui.BeginTooltip();
+                        ImGui.Text($"Click button to view external details");
+                        ImGui.Separator();
                         ImGui.Text($"[Average] Rewards per minute");
                         if (C.MissionConfig.TryGetValue(item.Id, out var config))
                         {
@@ -966,6 +971,7 @@ namespace ICE.Ui.MainUi.ModeSelect_Modes.CosmicTable
                             var timeExpired = selectedMode == TurninState.TimeExpired;
                             var scoreMode = selectedMode == TurninState.Master_Score;
                             var quickTurnin = selectedMode == TurninState.Gold;
+                            var itemTurnin = selectedMode == TurninState.Master_Items;
 
 
                             if (ImGui.RadioButton("Timed Turnin##TurninGoalRadio", timeExpired))
@@ -979,6 +985,7 @@ namespace ICE.Ui.MainUi.ModeSelect_Modes.CosmicTable
                                     "Currently there isn't a way to stop artisan from crafting, it's been requested\n" +
                                     "Please give it time");
                             }
+
                             ImGui.Separator();
                             if (ImGui.RadioButton("Score Goal##ScoreGoalRadio", scoreMode))
                             {
@@ -1001,6 +1008,31 @@ namespace ICE.Ui.MainUi.ModeSelect_Modes.CosmicTable
                                 configInfo.Master_Score = masterScore;
                                 C.SaveDebounced();
                             }
+
+                            if (item.SheetInfo.Jobs.ContainsAny(CosmicHelper.CrafterJobList))
+                            {
+                                ImGui.Separator();
+                                if (ImGui.RadioButton("After X Crafts", itemTurnin))
+                                {
+                                    configInfo.TurninGoal = TurninState.Master_Items;
+                                    C.SaveDebounced();
+                                }
+                                if (ImGui.IsItemHovered())
+                                {
+                                    ImGui.SetTooltip("Will turn in after X amount of crafts have been completed\n" +
+                                        "Good if you're goal is to just craft a certain amount and not worry bout score\n" +
+                                        "DO NOT. SET THIS TO SOME REDICULOUS AMOUNT AND ASK WHY IT DOESN'T WORK");
+                                }
+                                ImGui.SameLine();
+                                var itemCount = configInfo.Master_Items;
+                                ImGui.SetNextItemWidth(200);
+                                if (ImGui.InputUInt($"##ItemCount_{item.Id}", ref itemCount, 1))
+                                {
+                                    configInfo.Master_Items = itemCount;
+                                    C.SaveDebounced();
+                                }
+                            }
+
                             ImGui.Separator();
                             if (ImGui.RadioButton("Quick Turnin##QuickTurninRadio", quickTurnin))
                             {
