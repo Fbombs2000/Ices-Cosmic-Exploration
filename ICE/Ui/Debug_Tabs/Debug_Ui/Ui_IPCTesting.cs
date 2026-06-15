@@ -110,11 +110,11 @@ namespace ICE.Ui.Debug_Tabs.Debug_Ui
 
             if (ImGui.Button("Enable AutoHook"))
             {
-                P.AutoHook.SetPluginState(true);
+                P.AutoHook.Ah_State(true);
             }
             if (ImGui.Button("Disable Autohook"))
             {
-                P.AutoHook.SetPluginState(false);
+                P.AutoHook.Ah_State(false);
             }
 
             ImGui.Separator();

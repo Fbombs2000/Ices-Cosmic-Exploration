@@ -33,7 +33,7 @@ namespace ICE.Scheduler.Tasks
                 (
                     new(() => Task_CheckScore.Fish(), "Checking Score: Fishing"),
                     new(() => Task_Gather.UseFood(), "Checking for food usage"),
-                    new(() => FishingCheck(), "Checking Fishing State")
+                    new(() => FishCheckV2(), "Checking Fishing State")
                 );
         }
 
@@ -101,21 +101,24 @@ namespace ICE.Scheduler.Tasks
                     IceLogging.Info("We are reporting to be out of bait, proceeding to abandon/turnin mission");
                     SchedulerMain.State = IceState.AbandonMission;
                     SafetyThrottle = 0;
+                    P.AutoHook.Ah_State(false);
                     return true;
-                }
-                if (CosmicHelper.CurrentBait() == 0)
-                {
-                    if (EzThrottler.Throttle("Bait Message"))
-                        IceLogging.Debug($"We are reporting we didn't have a bait equipped, please be patient as we equip it [{firstBait}]", handle);
-                    return false;
                 }
 
                 if (CosmicHelper.CurrentMissionInfo.Attributes.HasFlag(MissionAttributes.Collectables) && !PlayerHelper.HasStatusId(805))
                 {
+                    uint fishCollectable = 4101;
+
                     if (EzThrottler.Throttle("Collectable message"))
                     {
                         IceLogging.Verbose("We might be missing collectors glove? Or it might still be being applied by autohook. Please give it time", handle);
                     }
+                    if (PlayerHelper.CanUseAction(fishCollectable))
+                    {
+                        if (EzThrottler.Throttle("Attempting to turn on collectability"))
+                            ActionManager.Instance()->UseAction(ActionType.Action, fishCollectable);
+                    }
+                    return false;
                 }
                 if (_fishingDebug == null)
                 {
@@ -140,9 +143,8 @@ namespace ICE.Scheduler.Tasks
 
                     if (EzThrottler.Throttle("Start Fishing: AH", 500))
                     {
-                        IceLogging.Verbose("We are telling autohook to start fishing via command...", handle);
-                        P.AutoHook.SetPluginState(true);
-                        Svc.Commands.ProcessCommand("/ahstart");
+                        IceLogging.Verbose("We are telling autohook to start fishing via IPC...", handle);
+                        P.AutoHook.Ah_State(true);
                     }
 
                     if (EzThrottler.Throttle("Started Fishing Throttle", 500))
@@ -323,7 +325,7 @@ namespace ICE.Scheduler.Tasks
             else
             {
                 // Means we are fishing, all we need to do is enable autohook then wait for us to get the amount of fish we need
-                P.AutoHook.SetPluginState(true);
+                P.AutoHook.Ah_State(true);
                 IceLogging.Info("We're starting to fish. So kicking it over to checking the fish items", handle);
                 P.TaskManager.Insert(() => FinishFishing(), "Waiting till we actually start fishing", Utils.TaskConfig);
                 BaitCounter = 0;

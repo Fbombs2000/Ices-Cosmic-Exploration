@@ -9,6 +9,7 @@ using ICE.Utilities.GatheringHelper;
 using ICE.Utilities.ImGuiTools;
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Text;
 using TerraFX.Interop.Windows;
 using static ICE.ConfigFiles.Config.MissionSettings;
@@ -86,411 +87,355 @@ namespace ICE.Ui
 
         public override void Draw()
         {
-            DrawMissionDetails();
-        }
-        public static void DrawMissionDetails()
-        {
-            if (CosmicHelper.SheetMissionDict.TryGetValue(SelectedMission, out var mission))
+            if (CosmicHelper.SheetMissionDict.TryGetValue(SelectedMission, out var sheetInfo))
             {
-                var id = SelectedMission;
-                ImGui.PushID($"{mission}_{id}");
-
-                #region Mission Name
-
                 ImGui.Text($"Mission:");
                 ImGui.SameLine(0, 5);
-                ImGui.TextDisabled($"[{id}]");
+                ImGui.TextDisabled($"[{SelectedMission}]");
                 ImGui.SameLine(0, 5);
-                ImGui.Text($"{mission.Name}");
+                ImGui.Text($"{sheetInfo.Name}");
 
-                #endregion
-
-                if (ImGui.BeginTable("Detailed Mission Info", 2, ImGuiTableFlags.SizingFixedFit | ImGuiTableFlags.Borders))
+                if (ImGui.BeginTabBar("Mission Details Master Tabs"))
                 {
-                    ImGui.TableSetupColumn("Name");
-                    ImGui.TableSetupColumn("Info");
+                    if (ImGui.BeginTabItem("Details"))
+                    {
+                        MissionDetails(sheetInfo);
+                        ImGui.EndTabItem();
+                    }
 
-                    // Row 1
+                    if (CosmicHelper.CrafterJobList.ContainsAny(sheetInfo.Jobs))
+                    {
+                        if (ImGui.BeginTabItem("Craft Details"))
+                        {
+                            CraftDetails(sheetInfo);
+                            ImGui.EndTabItem();
+                        }
+                    }
+
+                    if (ImGui.BeginTabItem("Completion Stats"))
+                    {
+                        StatInfo(sheetInfo);
+                        ImGui.EndTabItem();
+                    }
+                    ImGui.EndTabBar();
+                }
+            }
+        }
+        private static void MissionDetails(CosmicHelper.CosmicInfo mission)
+        {
+            if (ImGui.BeginTable("Detailed Mission Info", 2, ImGuiTableFlags.SizingFixedFit | ImGuiTableFlags.Borders))
+            {
+                ImGui.TableSetupColumn("Name");
+                ImGui.TableSetupColumn("Info");
+
+                // Row 1
+                ImGui.TableNextRow();
+                ImGui.TableSetColumnIndex(0);
+                ImGui.Text("Cosmocredits");
+
+                ImGui.TableNextColumn();
+                ImGui.Text($"{mission.CosmoCredit}");
+
+                ImGui.TableNextRow();
+                ImGui.TableSetColumnIndex(0);
+                ImGui.Text($"Planetary Credits");
+
+                ImGui.TableNextColumn();
+                ImGui.Text($"{mission.LunarCredit}");
+
+                if (mission.DronebitReward != 0)
+                {
                     ImGui.TableNextRow();
                     ImGui.TableSetColumnIndex(0);
-                    ImGui.Text("Cosmocredits");
-
-                    ImGui.TableNextColumn();
-                    ImGui.Text($"{mission.CosmoCredit}");
-
-                    ImGui.TableNextRow();
-                    ImGui.TableSetColumnIndex(0);
-                    ImGui.Text($"Planetary Credits");
-
-                    ImGui.TableNextColumn();
-                    ImGui.Text($"{mission.LunarCredit}");
-
-                    if (mission.DronebitReward != 0)
+                    if (Svc.Texture.TryGetFromGameIcon(65138, out var dronebitIcon))
                     {
-                        ImGui.TableNextRow();
-                        ImGui.TableSetColumnIndex(0);
-                        if (Svc.Texture.TryGetFromGameIcon(65138, out var dronebitIcon))
-                        {
-                            ImGui.Image(dronebitIcon.GetWrapOrEmpty().Handle, new Vector2(24, 24));
-                            if (ImGui.IsItemHovered())
-                            {
-                                ImGui.BeginTooltip();
-                                ImGui.Image(dronebitIcon.GetWrapOrEmpty().Handle, new Vector2(40, 40));
-                                ImGui.EndTooltip();
-                            }
-                            ImGui.SameLine();
-                        }
-                        ImGui.AlignTextToFramePadding();
-                        ImGui.Text($"Dronebits");
-
-                        ImGui.TableNextColumn();
-                        ImGui.AlignTextToFramePadding();
-                        ImGui.Text($"{mission.DronebitReward}");
-                    }
-
-                    ImGui.TableNextRow();
-                    ImGui.TableSetColumnIndex(0);
-                    ImGui.Text($"Class Score:");
-
-                    ImGui.TableNextColumn();
-                    ImGui.Text($"{mission.ClassScore}");
-
-                    ImGui.TableNextRow();
-                    ImGui.TableSetColumnIndex(0);
-                    ImGui.AlignTextToFramePadding();
-                    ImGui.Text($"Job(s)");
-
-                    ImGui.TableNextColumn();
-                    foreach (var job in mission.Jobs)
-                    {
-                        ISharedImmediateTexture? icon = CosmicHelper.ClassInfoDict[job].JobIcon;
-                        Vector2 size = new Vector2(20, 20);
-                        ImGui.Image(icon.GetWrapOrEmpty().Handle, size);
-                        ImGui.SameLine();
-                    }
-
-                    ImGui.TableNextRow();
-                    ImGui.TableSetColumnIndex(0);
-                    ImGui.AlignTextToFramePadding();
-                    ImGui.Text($"Completed:");
-
-                    ImGui.TableNextColumn();
-                    ImGui_Ice.CompletionStatusIcon(mission);
-
-                    if (mission.BronzeScore != 0)
-                    {
-                        ImGui.TableNextRow();
-                        ImGui.TableSetColumnIndex(0);
-                        ImGui.Text($"Bronze Requirement");
-
-                        ImGui.TableNextColumn();
-                        ImGui.Text($"{mission.BronzeScore}");
-                    }
-                    if (mission.SilverScore != 0)
-                    {
-                        ImGui.TableNextRow();
-                        ImGui.TableSetColumnIndex(0);
-                        ImGui.Text($"Silver Requirement");
-
-                        ImGui.TableNextColumn();
-                        ImGui.Text($"{mission.SilverScore}");
-                    }
-                    if (mission.GoldScore != 0)
-                    {
-                        ImGui.TableNextRow();
-                        ImGui.TableSetColumnIndex(0);
-                        ImGui.Text("Gold Requirement");
-
-                        ImGui.TableNextColumn();
-                        ImGui.Text($"{mission.GoldScore}");
-                    }
-
-                    if (mission.MarkerId != 0)
-                    {
-                        ImGui.TableNextRow();
-                        ImGui.TableSetColumnIndex(0);
-                        ImGui.Text("Gathering Zone");
-
-                        ImGui.TableNextColumn();
-
-                        ImGui.PushFont(UiBuilder.IconFont);
-                        ImGui.Text(FontAwesomeIcon.Flag.ToIconString());
-                        ImGui.PopFont();
-                        if (ImGui.IsItemClicked())
-                        {
-                            Utils.SetGatheringRing(mission.TerritoryId, (int)mission.MapPosition.X, (int)mission.MapPosition.Y, mission.Radius, mission.Name);
-                        }
-                    }
-
-                    if (GatheringUtil.CriticalSpots.TryGetValue(mission.Critical_MapKey, out var criticalInfo))
-                    {
-                        ImGui.TableNextRow();
-                        ImGui.TableSetColumnIndex(0);
-                        ImGui.Text("Critical Area");
-
-                        ImGui.TableNextColumn();
-                        ImGuiEx.Icon(FontAwesomeIcon.Flag);
-                        if (ImGui.IsItemClicked())
-                        {
-                            Utils.SetFlagForNPC(mission.TerritoryId, criticalInfo.X, criticalInfo.Y);
-                        }
-                    }
-
-                    ImGui.EndTable();
-                }
-
-                if (ImGui.BeginTable("Relic Exp Info Table", 2, ImGuiTableFlags.Borders | ImGuiTableFlags.SizingFixedFit))
-                {
-                    ImGui.TableSetupColumn("Relix Exp Kind");
-                    ImGui.TableSetupColumn("Amount");
-
-                    ImGui.TableHeadersRow();
-
-                    foreach (var xp in mission.RelicXpInfo.OrderByDescending(x => x.Key))
-                    {
-                        ImGui.TableNextRow();
-                        ImGui.TableSetColumnIndex(0);
-                        string type = "";
-                        switch (xp.Key)
-                        {
-                            case 1:
-                                type = "I";
-                                break;
-                            case 2:
-                                type = "II";
-                                break;
-                            case 3:
-                                type = "III";
-                                break;
-                            case 4:
-                                type = "IV";
-                                break;
-                            case 5:
-                                type = "V";
-                                break;
-                            case 6:
-                                type = "VI";
-                                break;
-                            case 7:
-                                type = "VII";
-                                break;
-                            default:
-                                type = "???";
-                                break;
-                        }
-
-                        ImGui.Text($"Lv. {type}");
-                        ImGui.TableNextColumn();
-                        ImGui.Text($"{xp.Value}");
-                    }
-
-                    ImGui.EndTable();
-                }
-
-                if (mission.ExpModifier_3 != 0)
-                {
-                    if (ImGui.BeginTable("Exp Rewards", 2, ImGuiTableFlags.SizingFixedFit | ImGuiTableFlags.Borders))
-                    {
-                        ImGui.TableSetupColumn("Class Exp");
-                        ImGui.TableSetupColumn("% of Level");
-
-                        ImGui.TableHeadersRow();
-
-                        if (mission.ExpModifier_1 != 0)
-                        {
-                            ImGui.TableNextRow();
-                            ImGui.TableSetColumnIndex(0);
-                            ImGui.Text("Lv. 10-49");
-
-                            ImGui.TableNextColumn();
-                            ImGui.Text($"{mission.ExpModifier_1}%");
-                        }
-
-                        if (mission.ExpModifier_2 != 0)
-                        {
-                            ImGui.TableNextRow();
-                            ImGui.TableSetColumnIndex(0);
-                            ImGui.Text("Lv. 50-89");
-
-                            ImGui.TableNextColumn();
-                            ImGui.Text($"{mission.ExpModifier_2}%");
-                        }
-
-                        if (mission.ExpModifier_3 != 0)
-                        {
-                            ImGui.TableNextRow();
-                            ImGui.TableSetColumnIndex(0);
-                            ImGui.Text("Lv. 90-99");
-
-                            ImGui.TableNextColumn();
-                            ImGui.Text($"{mission.ExpModifier_3}%");
-                        }
-
-                        ImGui.EndTable();
-                    }
-                }
-
-                if (mission.Crafts_Main.Count > 0)
-                {
-                    ImGui_Ice.WindowSpacer();
-
-                    Mission_Table.CrafterManagement(mission, id);
-                }
-
-                ImGui_Ice.WindowSpacer();
-
-                ImGui.Text("Mission Atributes");
-                if (mission.Attributes == MissionAttributes.None)
-                {
-                    ImGui.Text("None");
-                    return;
-                }
-                else
-                {
-                    foreach (MissionAttributes flag in Enum.GetValues<MissionAttributes>())
-                    {
-                        if (flag != MissionAttributes.None && mission.Attributes.HasFlag(flag))
-                        {
-                            ImGui.Text($"{EnumNameConverter(flag)}");
-                        }
-                    }
-                }
-
-                if (CosmicHelper.MissionUnlock.TryGetValue(SelectedMission, out var unlock))
-                {
-                    ImGui.Text("The following missions are required to have gold before you can do this one");
-                    foreach (var lockedMission in unlock)
-                    {
-                        ImGui_Ice.CompletionStatusIcon(CosmicHelper.SheetMissionDict[lockedMission]);
-                        ImGui.SameLine();
-                        ImGui.Text($"[{lockedMission}] - {CosmicHelper.SheetMissionDict[lockedMission].Name}");
-                    }
-
-                }
-
-                ImGui_Ice.WindowSpacer();
-                ImGui.Text($"Mission Times!");
-
-                if (C.MissionConfig.TryGetValue(SelectedMission, out var config))
-                {
-                    bool allowDelete = (ImGui.IsKeyDown(ImGuiKey.LeftShift) || ImGui.IsKeyDown(ImGuiKey.RightShift)) && (ImGui.IsKeyDown(ImGuiKey.LeftCtrl) || ImGui.IsKeyDown(ImGuiKey.RightCtrl));
-
-                    using (ImRaii.Disabled(!allowDelete))
-                    {
-                        if (ImGui.Button("Reset Stats"))
-                        {
-                            P.MissionTimer.ResetTimers(SelectedMission);
-                        }
-                    }
-                    if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
-                    {
-                        ImGui.BeginTooltip();
-                        ImGui.Text("Hold Shift + Control");
-                        ImGui.EndTooltip();
-                    }
-
-                    if (config.TurninRecords.Count > 0)
-                    {
-                        ImGui.Text($"Best Time: {TimeSpan.FromSeconds(config.BestTimeOverall()):mm\\:ss\\.ff}");
-                        ImGui.Text($"Average Time: {TimeSpan.FromSeconds(config.AverageTime()):mm\\:ss\\.ff}");
-                    }
-                    else
-                    {
-                        ImGui.Text("Best Time: --:--:--");
-                        ImGui.Text("Average Time: --:--:--");
-                    }
-
-                    ImGui.Text($"Times Completed: {config.TotalCompletions}");
-                    ImGui.Text($"Times Attempted: {config.TotalAttempts}");
-
-                    if (CosmicHelper.SheetMissionDict.TryGetValue(SelectedMission, out var missionInfo))
-                    {
-                        var baseScore = missionInfo.ClassScore;
-                        var comsoCredit = missionInfo.CosmoCredit;
-                        var planetCredit = missionInfo.LunarCredit;
-
-                        ImGui.Separator();
-                        ImGui.Text("Estimated Score Per Hour:");
-                        ImGui.SameLine();
-                        ImGui.TextDisabled("?");
+                        ImGui.Image(dronebitIcon.GetWrapOrEmpty().Handle, new Vector2(24, 24));
                         if (ImGui.IsItemHovered())
                         {
                             ImGui.BeginTooltip();
-                            ImGui.Text("This is ASSUMING:");
-                            ImGui.Text("1: You have immaculate rng of getting the mission you want every time");
-                            ImGui.Text("2: You're hitting the threshold every time");
-                            ImGui.Text("This is based on your average time.\n" +
-                                       "So get a good couple of runs to get a good feel for the timing");
+                            ImGui.Image(dronebitIcon.GetWrapOrEmpty().Handle, new Vector2(40, 40));
                             ImGui.EndTooltip();
                         }
-                        if (ImGui.BeginTable("Score Info: External Details", 5, ImGuiTableFlags.SizingFixedFit | ImGuiTableFlags.RowBg | ImGuiTableFlags.Borders))
-                        {
-                            foreach (var entry in missionInfo.ScoreInfo().Where(x => x.Value.Score != 0))
-                            {
-                                ImGui.TableNextRow();
-                                ImGui.TableSetColumnIndex(0);
-                                ImGui.Text($"{entry.Key} [{entry.Value.Completions:N0}]");
+                        ImGui.SameLine();
+                    }
+                    ImGui.AlignTextToFramePadding();
+                    ImGui.Text($"Dronebits");
 
-                                ImGui.TableNextColumn();
-                                ImGui.Text($"{entry.Value.Score:N2}");
+                    ImGui.TableNextColumn();
+                    ImGui.AlignTextToFramePadding();
+                    ImGui.Text($"{mission.DronebitReward}");
+                }
 
-                                ImGui.TableNextColumn();
-                                ImGui.Text($"{entry.Value.Cosmocredit:N2}");
+                ImGui.TableNextRow();
+                ImGui.TableSetColumnIndex(0);
+                ImGui.Text($"Class Score:");
 
-                                ImGui.TableNextColumn();
-                                ImGui.Text($"{entry.Value.PlanetCredits:N2}");
+                ImGui.TableNextColumn();
+                ImGui.Text($"{mission.ClassScore}");
 
-                                ImGui.TableNextColumn();
-                                string tokens = entry.Value.Tokens > 0 ? $"{entry.Value.Tokens:N2}" : "-";
-                                ImGui.Text(tokens);
-                            }
+                ImGui.TableNextRow();
+                ImGui.TableSetColumnIndex(0);
+                ImGui.AlignTextToFramePadding();
+                ImGui.Text($"Job(s)");
 
-                            ImGui.EndTable();
-                        }
-                        if (config.TotalCompletions != 0)
-                        {
-                            if (ImGui.BeginChild("Mission Timers", ImGui.GetContentRegionAvail()))
-                            {
-                                // Group records by state, preserving enum order
-                                var recordsByState = config.TurninRecords
-                                    .GroupBy(r => r.State)
-                                    .OrderBy(g => (int)g.Key)
-                                    .ToList();
+                ImGui.TableNextColumn();
+                foreach (var job in mission.Jobs)
+                {
+                    ISharedImmediateTexture? icon = CosmicHelper.ClassInfoDict[job].JobIcon;
+                    Vector2 size = new Vector2(20, 20);
+                    ImGui.Image(icon.GetWrapOrEmpty().Handle, size);
+                    ImGui.SameLine();
+                }
 
-                                if (ImGui.BeginTabBar("Completion Stats"))
-                                {
-                                    // "All" tab always shown if there are any records
-                                    if (ImGui.BeginTabItem("All"))
-                                    {
-                                        DrawTurninTable(config.TurninRecords);
-                                        ImGui.EndTabItem();
-                                    }
+                ImGui.TableNextRow();
+                ImGui.TableSetColumnIndex(0);
+                ImGui.AlignTextToFramePadding();
+                ImGui.Text($"Completed:");
 
-                                    // One tab per state that has at least one record
-                                    foreach (var group in recordsByState)
-                                    {
-                                        var label = group.Key.ToString();
-                                        if (ImGui.BeginTabItem(label))
-                                        {
-                                            DrawTurninTable(group.ToList());
-                                            ImGui.EndTabItem();
-                                        }
-                                    }
+                ImGui.TableNextColumn();
+                ImGui_Ice.CompletionStatusIcon(mission);
 
-                                    ImGui.EndTabBar();
-                                }
-                            }
-                            ImGui.EndChild();
-                        }
+                if (mission.BronzeScore != 0)
+                {
+                    ImGui.TableNextRow();
+                    ImGui.TableSetColumnIndex(0);
+                    ImGui.Text($"Bronze Requirement");
+
+                    ImGui.TableNextColumn();
+                    ImGui.Text($"{mission.BronzeScore}");
+                }
+                if (mission.SilverScore != 0)
+                {
+                    ImGui.TableNextRow();
+                    ImGui.TableSetColumnIndex(0);
+                    ImGui.Text($"Silver Requirement");
+
+                    ImGui.TableNextColumn();
+                    ImGui.Text($"{mission.SilverScore}");
+                }
+                if (mission.GoldScore != 0)
+                {
+                    ImGui.TableNextRow();
+                    ImGui.TableSetColumnIndex(0);
+                    ImGui.Text("Gold Requirement");
+
+                    ImGui.TableNextColumn();
+                    ImGui.Text($"{mission.GoldScore}");
+                }
+
+                if (mission.MarkerId != 0)
+                {
+                    ImGui.TableNextRow();
+                    ImGui.TableSetColumnIndex(0);
+                    ImGui.Text("Gathering Zone");
+
+                    ImGui.TableNextColumn();
+
+                    ImGui.PushFont(UiBuilder.IconFont);
+                    ImGui.Text(FontAwesomeIcon.Flag.ToIconString());
+                    ImGui.PopFont();
+                    if (ImGui.IsItemClicked())
+                    {
+                        Utils.SetGatheringRing(mission.TerritoryId, (int)mission.MapPosition.X, (int)mission.MapPosition.Y, mission.Radius, mission.Name);
                     }
                 }
 
-                ImGui.PopID();
+                if (GatheringUtil.CriticalSpots.TryGetValue(mission.Critical_MapKey, out var criticalInfo))
+                {
+                    ImGui.TableNextRow();
+                    ImGui.TableSetColumnIndex(0);
+                    ImGui.Text("Critical Area");
+
+                    ImGui.TableNextColumn();
+                    ImGuiEx.Icon(FontAwesomeIcon.Flag);
+                    if (ImGui.IsItemClicked())
+                    {
+                        Utils.SetFlagForNPC(mission.TerritoryId, criticalInfo.X, criticalInfo.Y);
+                    }
+                }
+
+                ImGui.EndTable();
+            }
+
+            if (mission.ExpModifier_3 != 0)
+            {
+                if (ImGui.BeginTable("Exp Rewards", 2, ImGuiTableFlags.SizingFixedFit | ImGuiTableFlags.Borders))
+                {
+                    ImGui.TableSetupColumn("Class Exp");
+                    ImGui.TableSetupColumn("% of Level");
+
+                    ImGui.TableHeadersRow();
+
+                    if (mission.ExpModifier_1 != 0)
+                    {
+                        ImGui.TableNextRow();
+                        ImGui.TableSetColumnIndex(0);
+                        ImGui.Text("Lv. 10-49");
+
+                        ImGui.TableNextColumn();
+                        ImGui.Text($"{mission.ExpModifier_1}%");
+                    }
+
+                    if (mission.ExpModifier_2 != 0)
+                    {
+                        ImGui.TableNextRow();
+                        ImGui.TableSetColumnIndex(0);
+                        ImGui.Text("Lv. 50-89");
+
+                        ImGui.TableNextColumn();
+                        ImGui.Text($"{mission.ExpModifier_2}%");
+                    }
+
+                    if (mission.ExpModifier_3 != 0)
+                    {
+                        ImGui.TableNextRow();
+                        ImGui.TableSetColumnIndex(0);
+                        ImGui.Text("Lv. 90-99");
+
+                        ImGui.TableNextColumn();
+                        ImGui.Text($"{mission.ExpModifier_3}%");
+                    }
+
+                    ImGui.EndTable();
+                }
+            }
+
+            ImGui.Text("Mission Atributes");
+            if (mission.Attributes == MissionAttributes.None)
+            {
+                ImGui.Text("None");
+                return;
             }
             else
             {
-                string joke = JokeList[jokeId];
-                ImGui.TextWrapped(joke);
+                foreach (MissionAttributes flag in Enum.GetValues<MissionAttributes>())
+                {
+                    if (flag != MissionAttributes.None && mission.Attributes.HasFlag(flag))
+                    {
+                        ImGui.Text($"{EnumNameConverter(flag)}");
+                    }
+                }
+            }
+        }
+        private static void CraftDetails(CosmicHelper.CosmicInfo mission)
+        {
+            if (mission.Crafts_Main.Count > 0)
+            {
+                Mission_Table.CrafterManagement(mission, SelectedMission);
+            }
+        }
+        
+        private static void StatInfo(CosmicHelper.CosmicInfo missionInfo)
+        {
+            if (C.MissionConfig.TryGetValue(SelectedMission, out var config))
+            {
+                bool allowDelete = (ImGui.IsKeyDown(ImGuiKey.LeftShift) || ImGui.IsKeyDown(ImGuiKey.RightShift)) && (ImGui.IsKeyDown(ImGuiKey.LeftCtrl) || ImGui.IsKeyDown(ImGuiKey.RightCtrl));
+
+                using (ImRaii.Disabled(!allowDelete))
+                {
+                    if (ImGui.Button("Reset Stats"))
+                    {
+                        P.MissionTimer.ResetTimers(SelectedMission);
+                    }
+                }
+                if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+                {
+                    ImGui.BeginTooltip();
+                    ImGui.Text("Hold Shift + Control");
+                    ImGui.EndTooltip();
+                }
+
+                if (config.TurninRecords.Count > 0)
+                {
+                    ImGui.Text($"Best Time: {TimeSpan.FromSeconds(config.BestTimeOverall()):mm\\:ss\\.ff}");
+                    ImGui.Text($"Average Time: {TimeSpan.FromSeconds(config.AverageTime()):mm\\:ss\\.ff}");
+                }
+                else
+                {
+                    ImGui.Text("Best Time: --:--:--");
+                    ImGui.Text("Average Time: --:--:--");
+                }
+
+                ImGui.Text($"Times Completed: {config.TotalCompletions}");
+                ImGui.Text($"Times Attempted: {config.TotalAttempts}");
+
+                var baseScore = missionInfo.ClassScore;
+                var comsoCredit = missionInfo.CosmoCredit;
+                var planetCredit = missionInfo.LunarCredit;
+
+                ImGui.Separator();
+                ImGui.Text("Estimated Score Per Hour:");
+                ImGui.SameLine();
+                ImGui.TextDisabled("?");
+                if (ImGui.IsItemHovered())
+                {
+                    ImGui.BeginTooltip();
+                    ImGui.Text("This is ASSUMING:");
+                    ImGui.Text("1: You have immaculate rng of getting the mission you want every time");
+                    ImGui.Text("2: You're hitting the threshold every time");
+                    ImGui.Text("This is based on your average time.\n" +
+                               "So get a good couple of runs to get a good feel for the timing");
+                    ImGui.EndTooltip();
+                }
+                if (ImGui.BeginTable("Score Info: External Details", 5, ImGuiTableFlags.SizingFixedFit | ImGuiTableFlags.RowBg | ImGuiTableFlags.Borders))
+                {
+                    foreach (var entry in missionInfo.ScoreInfo().Where(x => x.Value.Score != 0))
+                    {
+                        ImGui.TableNextRow();
+                        ImGui.TableSetColumnIndex(0);
+                        ImGui.Text($"{entry.Key} [{entry.Value.Completions:N0}]");
+
+                        ImGui.TableNextColumn();
+                        ImGui.Text($"{entry.Value.Score:N2}");
+
+                        ImGui.TableNextColumn();
+                        ImGui.Text($"{entry.Value.Cosmocredit:N2}");
+
+                        ImGui.TableNextColumn();
+                        ImGui.Text($"{entry.Value.PlanetCredits:N2}");
+
+                        ImGui.TableNextColumn();
+                        string tokens = entry.Value.Tokens > 0 ? $"{entry.Value.Tokens:N2}" : "-";
+                        ImGui.Text(tokens);
+                    }
+
+                    ImGui.EndTable();
+                }
+                if (config.TotalCompletions != 0)
+                {
+                    if (ImGui.BeginChild("Mission Timers", ImGui.GetContentRegionAvail()))
+                    {
+                        // Group records by state, preserving enum order
+                        var recordsByState = config.TurninRecords
+                            .GroupBy(r => r.State)
+                            .OrderBy(g => (int)g.Key)
+                            .ToList();
+
+                        if (ImGui.BeginTabBar("Completion Stats"))
+                        {
+                            // "All" tab always shown if there are any records
+                            if (ImGui.BeginTabItem("All"))
+                            {
+                                DrawTurninTable(config.TurninRecords);
+                                ImGui.EndTabItem();
+                            }
+
+                            // One tab per state that has at least one record
+                            foreach (var group in recordsByState)
+                            {
+                                var label = group.Key.ToString();
+                                if (ImGui.BeginTabItem(label))
+                                {
+                                    DrawTurninTable(group.ToList());
+                                    ImGui.EndTabItem();
+                                }
+                            }
+
+                            ImGui.EndTabBar();
+                        }
+                    }
+                    ImGui.EndChild();
+                }
             }
         }
 

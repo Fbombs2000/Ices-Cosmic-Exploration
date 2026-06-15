@@ -755,7 +755,7 @@ namespace ICE.Scheduler.Tasks
             var jobId = (uint)Player.Job;
 
             var actionId = collectorBuffs[action].ClassAction[jobId];
-            if (EzThrottler.Throttle("Using Action Buff", 100))
+            if (PlayerHelper.CanUseAction(actionId) && EzThrottler.Throttle("Using Action Buff", 100))
             {
                 ActionManager.Instance()->UseAction(ActionType.Action, actionId);
             }
@@ -766,7 +766,8 @@ namespace ICE.Scheduler.Tasks
             var jobId = (uint)Player.Job;
 
             var actionId = collectorAction[action].ClassAction[jobId];
-            ActionManager.Instance()->UseAction(ActionType.Action, actionId);
+            if (PlayerHelper.CanUseAction(actionId) && EzThrottler.Throttle("Using Action Buff", 100))
+                ActionManager.Instance()->UseAction(ActionType.Action, actionId);
         }
         public static bool? CheckReduceMission()
         {
