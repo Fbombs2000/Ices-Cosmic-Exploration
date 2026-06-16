@@ -287,6 +287,19 @@ namespace ICE.Ui.MainUi.ModeSelect_Modes.CosmicTable
                         ImGui.EndTooltip();
                     }
                 }
+                if (mission.SheetInfo.Jobs.Contains(18) && !GatheringUtil.FishingPreset.ContainsKey(mission.Id))
+                {
+                    using (var warningPush = ImRaii.PushColor(ImGuiCol.Text, EColor.Yellow))
+                    {
+                        ImGuiEx.Icon(FontAwesomeIcon.ExclamationTriangle);
+                    }
+                    if (ImGui.IsItemHovered())
+                    {
+                        ImGui.BeginTooltip();
+                        ImGui.Text("This mission doesn't have a fishing preset yet, this is your warning for this.");
+                        ImGui.EndTooltip();
+                    }
+                }
                 if (ImGui.Button(mission.SheetInfo.Name))
                 {
                     IceLogging.Verbose("Testing... if this fires off multiple times", "DEBUG TEST");
