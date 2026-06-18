@@ -79,4 +79,9 @@
 	<Target Name="EnsureOtterGuiSubmodules" BeforeTargets="BeforeBuild" Condition="!Exists('$(MSBuildThisFileDirectory)..\OtterGui\OtterGuiInternal\OtterGuiInternal.csproj')">
 		<Exec Command="git submodule update --init --recursive OtterGui" WorkingDirectory="$(MSBuildThisFileDirectory).." />
 	</Target>
+
+	<!-- Glamourer IPC types live in the Glamourer.Api submodule -->
+	<Target Name="EnsureGlamourerApiSubmodule" BeforeTargets="BeforeBuild" Condition="!Exists('$(MSBuildThisFileDirectory)..\Glamourer.Api\Glamourer.Api.csproj')">
+		<Exec Command="git submodule update --init Glamourer.Api" WorkingDirectory="$(MSBuildThisFileDirectory).." />
+	</Target>
 </Project>
