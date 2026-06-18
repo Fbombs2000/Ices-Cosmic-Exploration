@@ -126,7 +126,8 @@ namespace ICE.Ui.MainUi.ModeSelect_Modes
                              | C.StopWhenLevel
                             || C.StopOnceHitCosmoCredits
                             || C.StopOnceHitLunarCredits
-                            || C.StopOnceRelicFinished;
+                            || C.StopOnceRelicFinished
+                            || C.StopOnceStandardMissionsGolded;
                 if (AnyStop)
                 {
                     ImGui.SameLine(0, 10 * scale);
@@ -147,6 +148,8 @@ namespace ICE.Ui.MainUi.ModeSelect_Modes
                             ImGui.BulletText($"Stop once planetary credit hit [{C.LunarCreditsCap:N0}]");
                         if (C.StopOnceRelicFinished)
                             ImGui.BulletText($"Stop once relic completed");
+                        if (C.StopOnceStandardMissionsGolded)
+                            ImGui.BulletText("Stop when all standard missions are golded");
 
                         ImGui.Text("So if you stop and you're unsure why... this might be why");
 

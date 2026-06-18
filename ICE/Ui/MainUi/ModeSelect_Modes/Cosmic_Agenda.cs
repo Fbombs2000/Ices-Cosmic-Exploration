@@ -29,7 +29,6 @@ namespace ICE.Ui.MainUi.ModeSelect_Modes
             order.Add(PlaylistOptions.PlanetAmount);
             order.Add(PlaylistOptions.DronebitAmount);
             order.Add(PlaylistOptions.ClassLevel);
-            order.Add(PlaylistOptions.GoldClassMissions);
             return order;
         }
 
@@ -164,6 +163,9 @@ namespace ICE.Ui.MainUi.ModeSelect_Modes
                     {
                         foreach (PlaylistOptions option in Enum.GetValues<PlaylistOptions>())
                         {
+                            if (option == PlaylistOptions.GoldClassMissions)
+                                continue;
+
                             var displayName = CosmicHelper.PlaylistOptionString(option);
                             bool isSelected = SelectedOption == option;
 
