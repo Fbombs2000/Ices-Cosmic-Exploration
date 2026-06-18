@@ -102,6 +102,21 @@ namespace ICE.Ui.MainUi.Settings.Settings_Table
                 "360 = the whole fan will be available for selection\n" +
                 "Anything besides that will chose within that fan (if it's available)", false);
 
+            bool selfGather = C.Gather_NoNav;
+            if (ImGui.Checkbox("Disable Pathfinding Between Gathering Nodes", ref selfGather))
+            {
+                C.Gather_NoNav = selfGather;
+                C.SaveDebounced();
+            }
+            ImGui.SameLine();
+            ImGui_Ice.IconWithTooltip(FontAwesomeIcon.QuestionCircle,
+                "This will disable the pathfinding between the nodes WHILE in the mission\n" +
+                "But still allow the automation of skills/gathering actions/desynth between missions\n" +
+                "This is VERY testing beta, so there might be issues\n" +
+                "I swear on cuthulu's name if you enable this then ask \"Why it don't work\"" +
+                "You'll be banned by the shadow realm");
+
+
             bool useHubReturn = C.UseHubReturn;
             if (ImGui.Checkbox("Use Hub Return", ref useHubReturn))
             {

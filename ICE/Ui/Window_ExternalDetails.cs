@@ -332,7 +332,7 @@ namespace ICE.Ui
         {
             if (mission.Crafts_Main.Count > 0)
             {
-                Mission_Table.CrafterManagement(mission, SelectedMission);
+                CosmicHelper.CrafterManagement(mission, SelectedMission);
             }
         }
         

@@ -215,6 +215,15 @@ namespace ICE.Ui
                     missionText = missionText[..32] + "...";
                 ImGui.Text(missionText);
             }
+            else if (SchedulerMain.State == IceState.ArtifactSearch)
+            {
+                if (CosmicMoonRegistry.TryGetDronebit(Player.Territory.RowId, out var dronebit))
+                {
+                    PlayerHelper.GetItemCount(dronebit.boxId, out var count);
+
+                    ImGui.Text($"Dronebox Count: {count:N0}");
+                }
+            }
             else
             {
                 ImGui.Text("No mission");
