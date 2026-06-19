@@ -10,6 +10,7 @@ using System.Reflection;
 using static ICE.ConfigFiles.Config;
 using static ICE.Ui.MainUi.ModeSelect_Modes.CosmicTable.Mission_Table;
 using static ICE.Utilities.Cosmic_Helper.CosmicHelper;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.Window;
 
 namespace ICE.Ui.MainUi.ModeSelect_Modes.CosmicTable
 {
@@ -1206,10 +1207,6 @@ namespace ICE.Ui.MainUi.ModeSelect_Modes.CosmicTable
             {
                 Flags = ImGuiTableColumnFlags.NoResize;
             }
-            public override float Width => Math.Max(
-                ImGui.CalcTextSize(Label).X + ImGui.GetStyle().CellPadding.X * 2,
-                ImGui.CalcTextSize("Open Craft Settings").X + ImGui.GetStyle().FramePadding.X * 2 + ImGui.GetStyle().CellPadding.X * 2
-            );
             public override int Compare(MissionInfo lhs, MissionInfo rhs) => lhs.SheetInfo.Jobs.First().CompareTo(rhs.SheetInfo.Jobs.First());
             public override void DrawColumn(MissionInfo item, int idx)
             {
@@ -1222,10 +1219,17 @@ namespace ICE.Ui.MainUi.ModeSelect_Modes.CosmicTable
 
                 ImGui.PushID($"Mission: {item.Id}");
 
+                var frameHeight = ImGui.GetFrameHeight();
+                var jobIconSize = new Vector2(frameHeight);
+
+
 
                 if (sheetInfo.Attributes.HasFlag(MissionAttributes.Craft))
                 {
-                    if (ImGui.Button($"Open Craft Settings##Craft_{item.Id}"))
+                    var job = item.SheetInfo.Jobs.Where(x => CosmicHelper.CrafterJobList.Contains(x)).First();
+                    var icon = CosmicHelper.ClassInfoDict[job].JobIcon;
+
+                    if (ImGui_Ice.ImageButtonWithText(icon.GetWrapOrEmpty(), "Crafter Recipies", $"{item.Id}_{item.SheetInfo.Name}", jobIconSize))
                     {
                         ImGui.OpenPopup("Craft Settings: Recipies");
                     }
@@ -1244,11 +1248,14 @@ namespace ICE.Ui.MainUi.ModeSelect_Modes.CosmicTable
 
                 if (sheetInfo.Jobs.Count > 1)
                 {
-                    // ImGui.SameLine();
+                    ImGui.SameLine();
                 }
 
                 if (gatherProfile)
                 {
+                    var job = item.SheetInfo.Jobs.Where(x => CosmicHelper.GatheringJobList.Contains(x)).First();
+                    var icon = CosmicHelper.ClassInfoDict[job].JobIcon;
+
                     if (!collectable)
                     {
                         string profileName = "???";
@@ -1259,7 +1266,7 @@ namespace ICE.Ui.MainUi.ModeSelect_Modes.CosmicTable
                                 profileName = profileSetting.Name;
                             }
 
-                            if (ImGui.Button($"{profileName}##{item.Id}_{item.SheetInfo.Name}"))
+                            if (ImGui_Ice.ImageButtonWithText(icon.GetWrapOrEmpty(), "Gather Profile", $"{item.Id}_{item.SheetInfo.Name}", jobIconSize, 0.5f, 2))
                             {
                                 ImGui.OpenPopup($"Select Gather Profile");
                             }
@@ -1292,14 +1299,17 @@ namespace ICE.Ui.MainUi.ModeSelect_Modes.CosmicTable
                     }
                     else
                     {
-                        ImGuiUtil.Center("Auto");
+                        ImGui_Ice.ImageButtonWithText(icon.GetWrapOrEmpty(), "Collectable / Auto", $"{item.Id}_{item.SheetInfo.Name}", jobIconSize);
                     }
                 }
                 else if (fishProfile)
                 {
                     if (C.MissionConfig.TryGetValue(item.Id, out var config))
                     {
-                        if (ImGui.Button($"Fishing Settings"))
+                        var job = item.SheetInfo.Jobs.Where(x => CosmicHelper.GatheringJobList.Contains(x)).First();
+                        var icon = CosmicHelper.ClassInfoDict[job].JobIcon;
+
+                        if (ImGui_Ice.ImageButtonWithText(icon.GetWrapOrEmpty(), "Fishing Profile", $"{item.Id}_{item.SheetInfo.Name}", jobIconSize))
                         {
                             ImGui.OpenPopup("Select Fishing Profile");
                         }
@@ -1471,7 +1481,7 @@ namespace ICE.Ui.MainUi.ModeSelect_Modes.CosmicTable
 
             this.Headers = [.. headers];
             Sortable = true;
-            Flags |= ImGuiTableFlags.Reorderable | ImGuiTableFlags.Borders | ImGuiTableFlags.SizingFixedFit;
+            Flags |= ImGuiTableFlags.Reorderable | ImGuiTableFlags.Borders | ImGuiTableFlags.SizingFixedFit | ImGuiTableFlags.Resizable;
         }
 
         public void Dispose()
@@ -1737,7 +1747,10 @@ namespace ICE.Ui.MainUi.ModeSelect_Modes.CosmicTable
         }
         public sealed class NameColumn : VerticalCenterColumnString
         {
-            public NameColumn() => Flags |= ImGuiTableColumnFlags.NoHide | ImGuiTableColumnFlags.WidthStretch;
+            public NameColumn()
+            {
+                Flags = ImGuiTableColumnFlags.NoHide;
+            }
             public override string ToName(MissionInfo mission) => mission.SheetInfo.Name;
             public override void DrawColumn(MissionInfo mission, int _)
             {
@@ -2007,10 +2020,6 @@ namespace ICE.Ui.MainUi.ModeSelect_Modes.CosmicTable
             {
                 Flags = ImGuiTableColumnFlags.NoResize;
             }
-            public override float Width => Math.Max(
-                ImGui.CalcTextSize(Label).X + ImGui.GetStyle().CellPadding.X * 2,
-                ImGui.CalcTextSize("Open Craft Settings").X + ImGui.GetStyle().FramePadding.X * 2 + ImGui.GetStyle().CellPadding.X * 2
-            );
             public override int Compare(MissionInfo lhs, MissionInfo rhs) => lhs.SheetInfo.Jobs.First().CompareTo(rhs.SheetInfo.Jobs.First());
             public override void DrawColumn(MissionInfo item, int idx)
             {
@@ -2023,10 +2032,17 @@ namespace ICE.Ui.MainUi.ModeSelect_Modes.CosmicTable
 
                 ImGui.PushID($"Mission: {item.Id}");
 
+                var frameHeight = ImGui.GetFrameHeight();
+                var jobIconSize = new Vector2(frameHeight);
+
+
 
                 if (sheetInfo.Attributes.HasFlag(MissionAttributes.Craft))
                 {
-                    if (ImGui.Button($"Open Craft Settings##Craft_{item.Id}"))
+                    var job = item.SheetInfo.Jobs.Where(x => CosmicHelper.CrafterJobList.Contains(x)).First();
+                    var icon = CosmicHelper.ClassInfoDict[job].JobIcon;
+
+                    if (ImGui_Ice.ImageButtonWithText(icon.GetWrapOrEmpty(), "Crafter Recipies", $"{item.Id}_{item.SheetInfo.Name}", jobIconSize))
                     {
                         ImGui.OpenPopup("Craft Settings: Recipies");
                     }
@@ -2045,11 +2061,14 @@ namespace ICE.Ui.MainUi.ModeSelect_Modes.CosmicTable
 
                 if (sheetInfo.Jobs.Count > 1)
                 {
-                    // ImGui.SameLine();
+                    ImGui.SameLine();
                 }
 
                 if (gatherProfile)
                 {
+                    var job = item.SheetInfo.Jobs.Where(x => CosmicHelper.GatheringJobList.Contains(x)).First();
+                    var icon = CosmicHelper.ClassInfoDict[job].JobIcon;
+
                     if (!collectable)
                     {
                         string profileName = "???";
@@ -2060,7 +2079,7 @@ namespace ICE.Ui.MainUi.ModeSelect_Modes.CosmicTable
                                 profileName = profileSetting.Name;
                             }
 
-                            if (ImGui.Button($"{profileName}##{item.Id}_{item.SheetInfo.Name}"))
+                            if (ImGui_Ice.ImageButtonWithText(icon.GetWrapOrEmpty(), "Gather Profile", $"{item.Id}_{item.SheetInfo.Name}", jobIconSize, 0.5f, 2))
                             {
                                 ImGui.OpenPopup($"Select Gather Profile");
                             }
@@ -2093,14 +2112,17 @@ namespace ICE.Ui.MainUi.ModeSelect_Modes.CosmicTable
                     }
                     else
                     {
-                        ImGuiUtil.Center("Auto");
+                        ImGui_Ice.ImageButtonWithText(icon.GetWrapOrEmpty(), "Collectable / Auto", $"{item.Id}_{item.SheetInfo.Name}", jobIconSize);
                     }
                 }
                 else if (fishProfile)
                 {
                     if (C.MissionConfig.TryGetValue(item.Id, out var config))
                     {
-                        if (ImGui.Button($"Fishing Settings"))
+                        var job = item.SheetInfo.Jobs.Where(x => CosmicHelper.GatheringJobList.Contains(x)).First();
+                        var icon = CosmicHelper.ClassInfoDict[job].JobIcon;
+
+                        if (ImGui_Ice.ImageButtonWithText(icon.GetWrapOrEmpty(), "Fishing Profile", $"{item.Id}_{item.SheetInfo.Name}", jobIconSize))
                         {
                             ImGui.OpenPopup("Select Fishing Profile");
                         }
