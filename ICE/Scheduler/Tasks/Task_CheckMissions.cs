@@ -991,7 +991,9 @@ namespace ICE.Scheduler.Tasks
                     }
 
                     IceLogging.Verbose("If we've gotten this far, that means we need to figure out a path to go to the node. Doing so now", tag);
-                    Task_NavmeshMove.Enqueue_NavmeshTask(startNode.LandZone);
+                    var randomPosition = Task_NavmeshMove.Gather_RandomFanPosition(startNode);
+                    Task_NavmeshMove.Enqueue_NavmeshTask(randomPosition);
+
                     return true;
                 }
             }
@@ -1144,7 +1146,7 @@ namespace ICE.Scheduler.Tasks
 
                         if (allmissions.Contains(missionId))
                         {
-                            if (EzThrottler.Throttle("Selecting Mission"))
+                            if (EzThrottler.Throttle("Selecting Mission", 1000))
                                 InitiateMission(missionId);
                         }
                         else
