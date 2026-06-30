@@ -697,7 +697,7 @@ public static partial class ImGui_Ice
 
         return isExpanded;
     }
-    internal static bool DrawRankButton(string label, MissionFilter missionType, Mission_Table? missionTable, FontAwesomeIcon? icon = null, float spacingAfter = 5, bool disabled = false)
+    internal static bool DrawRankButton(string label, MissionFilter missionType, CosmicTables.Mission_Table? missionTable, FontAwesomeIcon? icon = null, float spacingAfter = 5, bool disabled = false)
     {
         float scale = ImGuiHelpers.GlobalScale;
 

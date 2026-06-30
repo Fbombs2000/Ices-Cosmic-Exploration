@@ -22,6 +22,7 @@ public static unsafe partial class CosmicHelper
             PlaylistOptions.ClassScore => "Class Score",
             PlaylistOptions.GoldClassMissions => "All Missions Golded",
             PlaylistOptions.ToolMaxExp => "Max Tool Exp",
+            PlaylistOptions.MasteryScore => "Mastery Score",
             _ => "???"
         };
     }
