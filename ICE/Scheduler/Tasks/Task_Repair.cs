@@ -238,8 +238,18 @@ namespace ICE.Scheduler.Tasks
 
             if (!PlayerHelper.AnyNeedsRepair(Char_Info.RepairPercent))
             {
-                IceLogging.Debug("All gear has been repaired, continuing", tag);
-                return true;
+                if (Svc.Condition[ConditionFlag.Occupied39])
+                {
+                    if (EzThrottler.Throttle("Waiting for repair"))
+                        IceLogging.Verbose("Waiting for us to finish repairs", tag);
+
+                    return false;
+                }
+                else
+                {
+                    IceLogging.Debug("All gear has been repaired, continuing", tag);
+                    return true;
+                }
             }
             else if (Svc.Condition[ConditionFlag.Mounted])
             {
@@ -248,6 +258,11 @@ namespace ICE.Scheduler.Tasks
                     IceLogging.Debug("Dismounting for self repair", tag);
                     ActionManager.Instance()->UseAction(ActionType.GeneralAction, 9);
                 }
+            }
+            else if (Svc.Condition[ConditionFlag.Occupied39])
+            {
+                if (EzThrottler.Throttle("Waiting for repair"))
+                    IceLogging.Verbose("Waiting for us to finish repairs", tag);
             }
             else if (GenericHelpers.TryGetAddonByName<AtkUnitBase>("SelectYesno", out var addon) && GenericHelpers.IsAddonReady(addon))
             {
@@ -276,6 +291,7 @@ namespace ICE.Scheduler.Tasks
                     ECommons.Automation.Callback.Fire(Yesno.Base, true, -1);
                 }
             }
+            // else if (GenericHelpers.TryGetAddonMaster<>)
             else if (GenericHelpers.TryGetAddonByName<AtkUnitBase>("Repair", out var repairWindow))
             {
                 if (GenericHelpers.IsAddonReady(repairWindow))
