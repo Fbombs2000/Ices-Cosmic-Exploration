@@ -37,6 +37,16 @@ namespace ICE.Scheduler.Tasks
                         new(CloseShop, "Closing the shop menu")
                     );
             }
+
+            if (CanExchanceCredits())
+            {
+                P.TaskManager.EnqueueMulti
+                    (
+                        new(TalkToCreditNPC, "Npc Talk: Material Exchange"),
+                        new(() => SelectShop(1), "Selecting Material Exchange")
+                        // new()
+                    );
+            }
         }
 
         private static bool CanPurchaseFromShop(List<uint> shoppingOrder, Dictionary<uint, Shop_Cosmocredits.ItemInfo> shopData)
@@ -64,6 +74,21 @@ namespace ICE.Scheduler.Tasks
                 // Check KeepBuying
                 if (item.KeepBuying && currencyAmount >= shopItem.Cost)
                     return true;
+            }
+
+            return false;
+        }
+        private static bool CanExchanceCredits()
+        {
+            var territory = Player.Territory.RowId;
+            int bookletAmount = 100;
+
+            if (CosmicMoonRegistry.TokenIds.TryGetValue(territory, out var tokenInfo))
+            {
+                if (PlayerHelper.GetItemCount(tokenInfo.tokenId, out var tokenCount))
+                {
+                    return tokenCount >= bookletAmount;
+                }
             }
 
             return false;
@@ -321,9 +346,7 @@ namespace ICE.Scheduler.Tasks
 
             return false;
         }
-
         private static uint ItemId = 0;
-
         private static bool? BuyMaterialItems()
         {
             bool TryPurchaseMaterialItem(ShopExchangeCurrency shopExchange, uint currencyAmount, Func<CosmoShoppingList, uint, int> getTargetAmount, Action<int> setAmount)
@@ -406,6 +429,12 @@ namespace ICE.Scheduler.Tasks
 
                 return true;
             }
+
+            return false;
+        }
+        private static bool? BuyPlanetBoolets()
+        {
+            // if (GenericHelpers.TryGetAddonMaster<ShopExchangeItemDialog>)
 
             return false;
         }

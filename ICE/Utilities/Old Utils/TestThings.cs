@@ -6,5 +6,9 @@ namespace ICE.Utilities.Old_Utils
 {
     internal class TestThings
     {
+        public static void ConditionTest()
+        {
+
+        }
     }
 }

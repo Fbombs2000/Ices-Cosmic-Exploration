@@ -265,6 +265,9 @@ namespace ICE.Scheduler.Tasks
                     bool potentionalTurnin = relicInfo.Stage_Current < relicInfo.Stage_Next;
                     bool canTurnin = true;
 
+                    IceLogging.Verbose("Reporting back relic level", tag);
+                    IceLogging.Verbose($"Current Lv: {relicInfo.Stage_Current} | Next Lv: {relicInfo.Stage_Next}", tag);
+
                     if (potentionalTurnin)
                     {
                         IceLogging.Verbose("We have a relic that we can potentionally turnin. These are the current Exp Stats", tag);
@@ -272,7 +275,6 @@ namespace ICE.Scheduler.Tasks
                         var totalExpCount = relicInfo.CurrentExp.Count();
                         if (totalExpCount != 0)
                         {
-                            IceLogging.Verbose($"Current Lv: {relicInfo.Stage_Current} | Next Lv: {relicInfo.Stage_Next}");
                             IceLogging.Verbose($"Total Exp Types: {relicInfo.CurrentExp.Count()}");
                             foreach (var exp in relicInfo.CurrentExp)
                             {
@@ -601,6 +603,9 @@ namespace ICE.Scheduler.Tasks
                 var relicInfo = relicProgress[jobId];
 
                 bool isUpgradable = relicInfo.Stage_Current < relicInfo.Stage_Next;
+                IceLogging.Verbose("Reporting Relic Info Progress", tag);
+                IceLogging.Verbose($"Job: [{CosmicHelper.GetJobName(jobId)} | {jobId}]", tag);
+                IceLogging.Verbose($"Current Stage: [{relicInfo.Stage_Current}] | Next Stage [{relicInfo.Stage_Next}]");
 
                 if (isUpgradable)
                 {
@@ -615,14 +620,13 @@ namespace ICE.Scheduler.Tasks
                             canTurnin &= exp.Value.Current >= exp.Value.Needed;
                         }
                         TurninRelic = isUpgradable && canTurnin;
-
+                        IceLogging.Verbose($"Are we expecting to turnin the relic? | [{TurninRelic}]", tag);
                     }
                     else
                     {
                         if (EzThrottler.Throttle("Force update exp"))
                         {
-                            IceLogging.Verbose("We seem... to be missing the exp? Which is odd. So going to force an update?");
-                            CosmicHelper.Task_UpdateRelicMissionInfo();
+                            IceLogging.Verbose("We seem... to be missing the exp? Which is odd. So going to force an update?", tag);
                         }
                         return false;
                     }
