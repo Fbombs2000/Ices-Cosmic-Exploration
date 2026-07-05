@@ -3,6 +3,7 @@ using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using ICE.ExtraUtil;
 using ICE.Utilities.Cosmic_Helper;
+using InteropGenerator.Runtime.Attributes;
 using System.Collections.Generic;
 using static ECommons.UIHelpers.AddonMasterImplementations.AddonMaster;
 using static ICE.ConfigFiles.Config;
@@ -38,13 +39,14 @@ namespace ICE.Scheduler.Tasks
                     );
             }
 
-            if (CanExchanceCredits())
+            if (CanExchanceTokens())
             {
                 P.TaskManager.EnqueueMulti
                     (
                         new(TalkToCreditNPC, "Npc Talk: Material Exchange"),
-                        new(() => SelectShop(1), "Selecting Material Exchange")
-                        // new()
+                        new(() => SelectShop(1), "Selecting Material Exchange"),
+                        new(BuyPlanetBoolets, "Buying booklets from the NPC", Utils.TaskConfig),
+                        new(CloseExchange, "Closing the exchange window")
                     );
             }
         }
@@ -78,7 +80,7 @@ namespace ICE.Scheduler.Tasks
 
             return false;
         }
-        private static bool CanExchanceCredits()
+        private static bool CanExchanceTokens()
         {
             var territory = Player.Territory.RowId;
             int bookletAmount = 100;
@@ -177,6 +179,17 @@ namespace ICE.Scheduler.Tasks
             {
                 if (EzThrottler.Throttle("Close Shop"))
                     shopAddon->Close(true);
+                return false;
+            }
+            else
+                return true;
+        }
+        private static unsafe bool? CloseExchange()
+        {
+            if (GenericHelpers.TryGetAddonByName<AtkUnitBase>("ShopExchangeItem", out var shopExchange) && shopExchange->IsReady)
+            {
+                if (EzThrottler.Throttle("Close Shop"))
+                    shopExchange->Close(true);
                 return false;
             }
             else
@@ -432,7 +445,11 @@ namespace ICE.Scheduler.Tasks
 
             return false;
         }
-        private static bool? BuyPlanetBoolets()
+
+        private static int Counter = 0;
+        private static bool WaitCounter = false;
+
+        public static bool? BuyPlanetBoolets()
         {
             string tag = "Shop Exchange: Planet Booklets";
 
@@ -447,12 +464,27 @@ namespace ICE.Scheduler.Tasks
                         IceLogging.Verbose("Attempting to turnin request", tag);
                     }
                 }
-                if (GenericHelpers.TryGetAddonMaster<SelectYesno>(out var YesNo) && YesNo.IsAddonReady)
+                else if (WaitCounter)
+                {
+                    if (EzThrottler.Throttle("Waiting for counter to count"))
+                    {
+                        Counter += 1;
+                    }
+                    if (Counter > 3)
+                    {
+                        WaitCounter = false;
+                        Counter = 0;
+                    }
+
+                    return false;
+                }
+                else if (GenericHelpers.TryGetAddonMaster<ShopExchangeItemDialog>(out var shopExchangeDialog) && shopExchangeDialog.IsAddonReady)
                 {
                     if (EzThrottler.Throttle("Buy Item", 500))
                     {
                         IceLogging.Verbose("Buying the item");
-                        YesNo.Yes();
+                        shopExchangeDialog.Exchange();
+                        WaitCounter = true;
                     }
                 }
                 else if (GenericHelpers.TryGetAddonMaster<ShopExchangeItem>(out var shopExchange) && shopExchange.IsAddonReady)
@@ -470,6 +502,11 @@ namespace ICE.Scheduler.Tasks
                             long buyAmountLong = tokenCount / bookletShop.ExchangeItems[0].RequiredAmount;
                             int buyAmount = (int)Math.Min(maxExchange, buyAmountLong);
 
+                            if (EzThrottler.Throttle("Merging items", 1000))
+                            {
+                                MergeItems();
+                            }
+
                             if (buyAmount != 0)
                             {
                                 if (EzThrottler.Throttle("Selecting the item"))
@@ -481,8 +518,14 @@ namespace ICE.Scheduler.Tasks
                             else
                             {
                                 IceLogging.Verbose("We have reached the end of buying tokens, exiting out of the process", tag);
+                                return true;
                             }
                         }
+                    }
+                    else
+                    {
+                        IceLogging.Verbose("We've reached the limit of buying booklets, going to exit out", tag);
+                        return true;
                     }
                 }
             }

@@ -19,7 +19,12 @@ namespace ICE.Ui.Debug_Tabs.Debug_Hud
 
             if (GenericHelpers.TryGetAddonMaster<ShopExchangeItem>(out var shopExchange) && shopExchange.IsAddonReady)
             {
-
+                ImGui.SameLine();
+                if (ImGui.Button("Queue Exchange Buy"))
+                {
+                    if (!P.TaskManager.IsBusy)
+                        P.TaskManager.Enqueue(() => Task_BuyCosmoItems.BuyPlanetBoolets(), Utils.TaskConfig);
+                }
                 if (ImGui.BeginTable("Shop Exchange Items", 4, ImGuiTableFlags.SizingFixedFit | ImGuiTableFlags.Borders))
                 {
                     ImGui.TableSetupColumn("Item");
