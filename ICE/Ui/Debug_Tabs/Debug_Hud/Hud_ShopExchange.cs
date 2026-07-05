@@ -7,10 +7,19 @@ namespace ICE.Ui.Debug_Tabs.Debug_Hud
 {
     internal class Hud_ShopExchange
     {
+        private static int BuyAmount = 1;
+
         public static void Draw()
         {
+            if (ImGui.Button("Merge Items"))
+            {
+                if (EzThrottler.Throttle("Merge Throttle"))
+                    Task_BuyCosmoItems.MergeItems();
+            }
+
             if (GenericHelpers.TryGetAddonMaster<ShopExchangeItem>(out var shopExchange) && shopExchange.IsAddonReady)
             {
+
                 if (ImGui.BeginTable("Shop Exchange Items", 4, ImGuiTableFlags.SizingFixedFit | ImGuiTableFlags.Borders))
                 {
                     ImGui.TableSetupColumn("Item");
@@ -51,6 +60,15 @@ namespace ICE.Ui.Debug_Tabs.Debug_Hud
                                     ImGui.SetTooltip($"{itemInfo.Name.ToString()}");
                                 }
                             }
+                        }
+
+                        ImGui.TableNextColumn();
+                        ImGui.SetNextItemWidth(200);
+                        ImGui.InputInt($"Buy Amount", ref BuyAmount);
+                        ImGui.SameLine();
+                        if (ImGui.Button($"Buy Item##{item.ItemId}_Buy"))
+                        {
+                            item.Select(BuyAmount);
                         }
                     }
 
