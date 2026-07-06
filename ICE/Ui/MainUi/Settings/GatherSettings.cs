@@ -1062,6 +1062,16 @@ namespace ICE.Ui.MainUi.Settings
                                "This will wipe out all your current profiles, and apply what I would suggest for each one.\n" +
                                "For most of you this would be fine, this is really only here if you don't know what to apply for each one." +
                                "If you're okay with this, hold left shift and apply");
+
+            using (ImRaii.Disabled(!ImGui.IsKeyDown(ImGuiKey.LeftShift)))
+            {
+                if (ImGui.Button("Reset Fishing Presets"))
+                {
+                    ResetAllFisherProfiles();
+                }
+            }
+            ImGuiEx.HelpMarker("Will reset all fishing presets to their default internal settings\n" +
+                "Hold Left Shift to allow applying");
         }
 
         private static MissionKinds GetMissionKind(MissionAttributes attrs)
@@ -1137,6 +1147,17 @@ namespace ICE.Ui.MainUi.Settings
             GatherSettings.InitialSetupProfile(GreaterReach_Boon, MissionKinds.GreaterReach_Boon, out var _);
             GatherSettings.InitialSetupProfile(GreaterReach_BoonCh, MissionKinds.GreaterReach_Boon_Chain, out var _);
 
+        }
+
+        private static void ResetAllFisherProfiles()
+        {
+            IceLogging.Verbose("User has selected to reset all fishing presets, respecting request", "Gathering Settings");
+            foreach (var config in C.MissionConfig)
+            {
+                config.Value.Use_BuildinPreset = true;
+                config.Value.AutoHookPresetName = string.Empty;
+            }
+            C.SaveDebounced();
         }
     }
 }

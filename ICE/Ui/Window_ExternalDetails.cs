@@ -160,7 +160,7 @@ namespace ICE.Ui
                     ImGui.TableSetColumnIndex(0);
                     if (Svc.Texture.TryGetFromGameIcon(65138, out var dronebitIcon))
                     {
-                        ImGui.Image(dronebitIcon.GetWrapOrEmpty().Handle, new Vector2(24, 24));
+                        ImGui_Ice.ImageButtonWithText(dronebitIcon.GetWrapOrEmpty(), "Dronebits", "dronebit", new Vector2(24, 24));
                         if (ImGui.IsItemHovered())
                         {
                             ImGui.BeginTooltip();
@@ -169,8 +169,6 @@ namespace ICE.Ui
                         }
                         ImGui.SameLine();
                     }
-                    ImGui.AlignTextToFramePadding();
-                    ImGui.Text($"Dronebits");
 
                     ImGui.TableNextColumn();
                     ImGui.AlignTextToFramePadding();
@@ -307,6 +305,85 @@ namespace ICE.Ui
                             ImGui.Text(" | ");
                             ImGui.SameLine();
                         }
+                    }
+                }
+
+                ImGui.TableNextRow();
+                ImGui.TableSetColumnIndex(0);
+                ImGui.Text($"Notes [Hover over]");
+
+                ImGui.TableNextColumn();
+                var HasSPM = mission.BestSPM.SPM > 0;
+                var HasSequence = mission.SequenceMissions_Next.Count() > 0 || mission.SequenceMissions_Previous.Count() > 0;
+                var HasUnlockable = mission.MissionUnlock.Count() > 0;
+
+                if (HasSPM)
+                {
+                    ImGuiEx.IconButton(FontAwesomeIcon.Trophy);
+                    if (ImGui.IsItemHovered())
+                    {
+                        ImGui.BeginTooltip();
+                        ImGui.Text($"Average SPM: {mission.BestSPM.SPM:N2}");
+                        ImGui.Text($"{mission.BestSPM.NoteInfo}");
+                        ImGui.EndTooltip();
+                    }
+                }
+                if (HasSequence)
+                {
+                    if (HasSPM)
+                        ImGui.SameLine();
+
+                    ImGuiEx.IconButton(FontAwesomeIcon.ListOl);
+                    if (ImGui.IsItemHovered())
+                    {
+                        ImGui.BeginTooltip();
+                        if (mission.SequenceMissions_Next.Count() > 0)
+                        {
+                            ImGui.Text("Next Sequence:");
+                            foreach (var missionSeq in mission.SequenceMissions_Next)
+                            {
+                                var seqInfo = CosmicHelper.SheetMissionDict[missionSeq];
+                                ImGui.Text($"[{missionSeq}] {seqInfo.Name}");
+                            }
+                        }
+                        if (mission.SequenceMissions_Previous.Count() > 0)
+                        {
+                            ImGui.Text("Previous Sequence:");
+                            foreach (var missionSeq in mission.SequenceMissions_Previous)
+                            {
+                                var seqInfo = CosmicHelper.SheetMissionDict[missionSeq];
+                                ImGui.Text($"[{missionSeq}] {seqInfo.Name}");
+                            }
+                        }
+                        ImGui.EndTooltip();
+                    }
+                }
+                if (HasUnlockable)
+                {
+                    if (HasSPM || HasSequence)
+                    {
+                        ImGui.SameLine();
+                    }
+                    if (Svc.Texture.GetFromGame("ui/uld/WKSMission_hr1.tex") is { } tex)
+                    {
+                        var frameHeight = ImGui.GetFrameHeight();
+                        var size = new Vector2(frameHeight);
+                        if (tex.TryGetWrap(out var wrap, out var exc))
+                        {
+                            ImGui.ImageButton(wrap.Handle, size, new Vector2(0.2347f, 0.3500f), new Vector2(0.2959f, 0.6500f));
+                        }
+                    }
+                    if (ImGui.IsItemHovered())
+                    {
+                        ImGui.BeginTooltip();
+                        ImGui.Text("The following missions are required to have gold before you can do this one");
+                        foreach (var missionUnlock in mission.MissionUnlock)
+                        {
+                            ImGui_Ice.CompletionStatusIcon(CosmicHelper.SheetMissionDict[missionUnlock]);
+                            ImGui.SameLine();
+                            ImGui.Text($"[{mission}] - {CosmicHelper.SheetMissionDict[missionUnlock].Name}");
+                        }
+                        ImGui.EndTooltip();
                     }
                 }
 

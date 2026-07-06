@@ -1581,7 +1581,6 @@ public static class CosmicTables
                     }
 
                     C.SaveDebounced();
-                    _table.SetFilterDirty();
                 }
                 if (ImGui.IsItemClicked())
                 {
