@@ -51,21 +51,25 @@ namespace ICE.Scheduler.Handlers
                 if (AddonHelper.IsAddonActive("WKSLottery") && C.GambaEnabled && SchedulerMain.State == IceState.Idle)
                     SchedulerMain.EnablePlugin();
             }
-            if (GenericHelpers.TryGetAddonByName<AddonRequest>("Request", out var addon3))
+            //by Taurenkey https://github.com/PunishXIV/PandorasBox/blob/24a4352f5b01751767c7ca7f1d4b48369be98711/PandorasBox/Features/UI/AutoSelectTurnin.cs
+            if (SchedulerMain.State != IceState.Idle)
             {
-                for (var i = 1; i <= addon3->EntryCount; i++)
+                if (GenericHelpers.TryGetAddonByName<AddonRequest>("Request", out var addon3))
                 {
-                    if (SlotsFilled.Contains(addon3->EntryCount)) ConfirmOrAbort(addon3);
-                    if (SlotsFilled.Contains(i)) return;
-                    var val = i;
-                    TaskManager.DelayNext($"ClickTurnin{val}", 10);
-                    TaskManager.Enqueue(() => TryClickItem(addon3, val));
+                    for (var i = 1; i <= addon3->EntryCount; i++)
+                    {
+                        if (SlotsFilled.Contains(addon3->EntryCount)) ConfirmOrAbort(addon3);
+                        if (SlotsFilled.Contains(i)) return;
+                        var val = i;
+                        TaskManager.DelayNext($"ClickTurnin{val}", 10);
+                        TaskManager.Enqueue(() => TryClickItem(addon3, val));
+                    }
                 }
-            }
-            else
-            {
-                SlotsFilled.Clear();
-                TaskManager.Abort();
+                else
+                {
+                    SlotsFilled.Clear();
+                    TaskManager.Abort();
+                }
             }
         }
 
