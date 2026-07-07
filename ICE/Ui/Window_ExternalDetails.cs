@@ -1,5 +1,7 @@
 using Dalamud.Interface;
 using Dalamud.Interface.Textures;
+using Dalamud.Interface.Textures.TextureWraps;
+using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using ICE.Ui.MainUi.ModeSelect_Modes;
@@ -7,6 +9,7 @@ using ICE.Ui.MainUi.ModeSelect_Modes.CosmicTable;
 using ICE.Utilities.Cosmic_Helper;
 using ICE.Utilities.GatheringHelper;
 using ICE.Utilities.ImGuiTools;
+using OtterGui;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -132,55 +135,143 @@ namespace ICE.Ui
                 }
             }
         }
+        private static IDalamudTextureWrap TrophyIcon(TurninState state)
+        {
+            string resource = state switch
+            {
+                TurninState.Bronze => "ICE.Resources.TrophyIcons.bronze_trophy.png",
+                TurninState.Silver => "ICE.Resources.TrophyIcons.silver_trophy.png",
+                TurninState.Gold => "ICE.Resources.TrophyIcons.gold_trophy.png",
+                _ => "ICE.Resources.TrophyIcons.bronze_trophy.png",
+            };
+
+            var texture = Svc.Texture.GetFromManifestResource(Assembly.GetExecutingAssembly(), resource).GetWrapOrEmpty();
+            return texture;
+        }
         private static void MissionDetails(CosmicHelper.CosmicInfo mission)
         {
+            float scale = ImGuiHelpers.GlobalScale;
+            Vector2 size = new Vector2(24 * scale, 24 * scale);
+
+            void ItemInfo(uint itemId, uint amount)
+            {
+                if (amount != 0)
+                {
+                    ImGui.TableNextRow();
+                    ImGui.TableSetColumnIndex(0);
+                    if (ExcelHelper.ItemSheet.TryGetRow(itemId, out var itemSheet))
+                    {
+                        var iconId = (int)itemSheet.Icon;
+                        if (Svc.Texture.TryGetFromGameIcon(iconId, out var iconTexture))
+                        {
+                            ImGui_Ice.ImageButtonWithText(iconTexture.GetWrapOrEmpty(), $"{itemSheet.Name}", $"{itemSheet.Name}", size);
+                        }
+                    }
+
+                    ImGui.TableNextColumn();
+                    ImGui.AlignTextToFramePadding();
+                    ImGui.Text($"{amount:N0}");
+                }
+            }
+
+            void ScoreInfo(TurninState state, string label, uint score)
+            {
+                var texture = TrophyIcon(state);
+                if (score != 0)
+                {
+                    ImGui.TableNextRow();
+                    ImGui.TableSetColumnIndex(0);
+                    ImGui_Ice.ImageButtonWithText(texture, label, label, size);
+
+                    ImGui.TableNextColumn();
+                    ImGui.AlignTextToFramePadding();
+                    ImGui.Text($"{score:N0}");
+                }
+            }
+
+            void RelicInfo()
+            {
+                var exps = mission.RelicXpInfo
+                    .Where(x => x.Value != 0)
+                    .OrderBy(x => x.Key)
+                    .ToList();
+
+                if (exps.Count != 0)
+                {
+                    ImGui.TableNextRow();
+                    ImGui.TableSetColumnIndex(0);
+                    ImGui.Text($"Mission Exp[s]");
+
+                    ImGui.TableNextColumn();
+                    for (int i = 0; i < exps.Count; i++)
+                    {
+                        var (tier, value) = (exps[i].Key, exps[i].Value);
+
+                        Vector4 pillColor = tier switch
+                        {
+                            1 => new Vector4(0.9f, 0.8f, 0.1f, 0.8f), // I   - Yellow
+                            2 => new Vector4(0.9f, 0.5f, 0.1f, 0.8f), // II  - Orange
+                            3 => new Vector4(0.8f, 0.2f, 0.2f, 0.8f), // III - Red
+                            4 => new Vector4(0.6f, 0.2f, 0.8f, 0.8f), // IV  - Purple
+                            5 => new Vector4(0.2f, 0.4f, 0.9f, 0.8f), // V   - Blue
+                            6 => new Vector4(0.4f, 0.8f, 1.0f, 0.8f), // VI  - Light Blue
+                            7 => new Vector4(0.2f, 0.8f, 0.3f, 0.8f), // VII - Green
+                            _ => new Vector4(0.5f, 0.5f, 0.5f, 0.8f),
+                        };
+
+                        string roman = tier switch
+                        {
+                            1 => "I",
+                            2 => "II",
+                            3 => "III",
+                            4 => "IV",
+                            5 => "V",
+                            6 => "VI",
+                            7 => "VII",
+                            _ => "?"
+                        };
+
+
+                        using (ImRaii.PushColor(ImGuiCol.Button, pillColor)
+                                     .Push(ImGuiCol.ButtonHovered, pillColor with { W = 1.0f })
+                                     .Push(ImGuiCol.ButtonActive, pillColor))
+                        {
+                            ImGui.SmallButton($"{roman}:{value}##exp{tier}");
+                        }
+
+                        if (i < exps.Count - 1)
+                            ImGui.SameLine();
+                    }
+                }
+            }
+
             if (ImGui.BeginTable("Detailed Mission Info", 2, ImGuiTableFlags.SizingFixedFit | ImGuiTableFlags.Borders))
             {
                 ImGui.TableSetupColumn("Name");
                 ImGui.TableSetupColumn("Info");
 
-                // Row 1
-                ImGui.TableNextRow();
-                ImGui.TableSetColumnIndex(0);
-                ImGui.Text("Cosmocredits");
+                // Cosmocredits
+                ItemInfo(45690, mission.CosmoCredit);
 
-                ImGui.TableNextColumn();
-                ImGui.Text($"{mission.CosmoCredit}");
-
-                ImGui.TableNextRow();
-                ImGui.TableSetColumnIndex(0);
-                ImGui.Text($"Planetary Credits");
-
-                ImGui.TableNextColumn();
-                ImGui.Text($"{mission.LunarCredit}");
-
-                if (mission.DronebitReward != 0)
+                // Planetary Credit
+                if (CosmicMoonRegistry.TryGetPlanetCreditItemId(mission.TerritoryId, out var planetCreditId))
                 {
-                    ImGui.TableNextRow();
-                    ImGui.TableSetColumnIndex(0);
-                    if (Svc.Texture.TryGetFromGameIcon(65138, out var dronebitIcon))
-                    {
-                        ImGui_Ice.ImageButtonWithText(dronebitIcon.GetWrapOrEmpty(), "Dronebits", "dronebit", new Vector2(24, 24));
-                        if (ImGui.IsItemHovered())
-                        {
-                            ImGui.BeginTooltip();
-                            ImGui.Image(dronebitIcon.GetWrapOrEmpty().Handle, new Vector2(40, 40));
-                            ImGui.EndTooltip();
-                        }
-                        ImGui.SameLine();
-                    }
-
-                    ImGui.TableNextColumn();
-                    ImGui.AlignTextToFramePadding();
-                    ImGui.Text($"{mission.DronebitReward}");
+                    ItemInfo(planetCreditId, mission.LunarCredit);
                 }
 
-                ImGui.TableNextRow();
-                ImGui.TableSetColumnIndex(0);
-                ImGui.Text($"Class Score:");
+                if (CosmicMoonRegistry.TryGetDronebit(mission.TerritoryId, out var dronebitId))
+                {
+                    ItemInfo(dronebitId.creditId, mission.DronebitReward);
+                }
 
-                ImGui.TableNextColumn();
-                ImGui.Text($"{mission.ClassScore}");
+                if (CosmicMoonRegistry.TokenIds.TryGetValue(mission.TerritoryId, out var tokenId))
+                {
+                    ItemInfo(tokenId.tokenId, mission.TokenItemAmount);
+                }
+
+                RelicInfo();
+
+                ScoreInfo(TurninState.Gold, "Class Score", mission.ClassScore);
 
                 ImGui.TableNextRow();
                 ImGui.TableSetColumnIndex(0);
@@ -188,13 +279,7 @@ namespace ICE.Ui
                 ImGui.Text($"Job(s)");
 
                 ImGui.TableNextColumn();
-                foreach (var job in mission.Jobs)
-                {
-                    ISharedImmediateTexture? icon = CosmicHelper.ClassInfoDict[job].JobIcon;
-                    Vector2 size = new Vector2(20, 20);
-                    ImGui.Image(icon.GetWrapOrEmpty().Handle, size);
-                    ImGui.SameLine();
-                }
+                ImGui_Ice.DrawJobIconButton("Jobs", mission.Jobs);
 
                 ImGui.TableNextRow();
                 ImGui.TableSetColumnIndex(0);
@@ -204,33 +289,9 @@ namespace ICE.Ui
                 ImGui.TableNextColumn();
                 ImGui_Ice.CompletionStatusIcon(mission);
 
-                if (mission.BronzeScore != 0)
-                {
-                    ImGui.TableNextRow();
-                    ImGui.TableSetColumnIndex(0);
-                    ImGui.Text($"Bronze Requirement");
-
-                    ImGui.TableNextColumn();
-                    ImGui.Text($"{mission.BronzeScore}");
-                }
-                if (mission.SilverScore != 0)
-                {
-                    ImGui.TableNextRow();
-                    ImGui.TableSetColumnIndex(0);
-                    ImGui.Text($"Silver Requirement");
-
-                    ImGui.TableNextColumn();
-                    ImGui.Text($"{mission.SilverScore}");
-                }
-                if (mission.GoldScore != 0)
-                {
-                    ImGui.TableNextRow();
-                    ImGui.TableSetColumnIndex(0);
-                    ImGui.Text("Gold Requirement");
-
-                    ImGui.TableNextColumn();
-                    ImGui.Text($"{mission.GoldScore}");
-                }
+                ScoreInfo(TurninState.Bronze, "Bronze Requirement", mission.BronzeScore);
+                ScoreInfo(TurninState.Silver, "Silver Requirement", mission.SilverScore);
+                ScoreInfo(TurninState.Gold, "Gold Requirement", mission.GoldScore);
 
                 if (mission.MarkerId != 0)
                 {
@@ -270,13 +331,11 @@ namespace ICE.Ui
                     ImGui.Text("Mission Skill");
 
                     ImGui.TableNextColumn();
-                    ImGui.Image(mission.TemporaryAction.Icon.GetWrapOrEmpty().Handle, new(24, 24));
+                    ImGui_Ice.ImageButtonWithText(mission.TemporaryAction.Icon.GetWrapOrEmpty(), $"{mission.TemporaryAction.Name}", "tempAction", size);
                     if (ImGui.IsItemHovered() && mission.TemporaryAction.UseAmount != 0)
                     {
                         ImGui.SetTooltip($"Max Use: {mission.TemporaryAction.UseAmount}");
                     }
-                    ImGui.SameLine();
-                    ImGui.Text($"{mission.TemporaryAction.Name}");
                 }
 
                 if (mission.Supplies.Count > 0)
@@ -289,7 +348,7 @@ namespace ICE.Ui
                     for (int i = 0; i < mission.Supplies.Count(); i++)
                     {
                         var supply = mission.Supplies[i];
-                        ImGui.Image(supply.Icon.GetWrapOrEmpty().Handle, new(24));
+                        ImGui_Ice.ImageButtonWithText(supply.Icon.GetWrapOrEmpty(), $"{supply.Count:N0}", "Supplyitem", size);
                         if (ImGui.IsItemHovered())
                         {
                             ImGui.BeginTooltip();
@@ -297,8 +356,6 @@ namespace ICE.Ui
                             ImGui.Text($"Name: {supply.Name}");
                             ImGui.EndTooltip();
                         }
-                        ImGui.SameLine();
-                        ImGui.Text($"x {supply.Count}");
                         if (i+1 < mission.Supplies.Count())
                         {
                             ImGui.SameLine();
@@ -367,7 +424,6 @@ namespace ICE.Ui
                     if (Svc.Texture.GetFromGame("ui/uld/WKSMission_hr1.tex") is { } tex)
                     {
                         var frameHeight = ImGui.GetFrameHeight();
-                        var size = new Vector2(frameHeight);
                         if (tex.TryGetWrap(out var wrap, out var exc))
                         {
                             ImGui.ImageButton(wrap.Handle, size, new Vector2(0.2347f, 0.3500f), new Vector2(0.2959f, 0.6500f));
@@ -457,7 +513,6 @@ namespace ICE.Ui
                 CosmicHelper.CrafterManagement(mission, SelectedMission);
             }
         }
-        
         private static void StatInfo(CosmicHelper.CosmicInfo missionInfo)
         {
             if (C.MissionConfig.TryGetValue(SelectedMission, out var config))
@@ -571,7 +626,6 @@ namespace ICE.Ui
                 }
             }
         }
-
         public static string EnumNameConverter(MissionAttributes attribute)
         {
             return attribute switch
